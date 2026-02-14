@@ -1,0 +1,32 @@
+import { RetroBoard } from "@/components/retro/RetroBoard";
+import { RetroShareLink } from "@/components/retro/RetroShareLink";
+
+interface PageProps {
+  params: Promise<{ token: string }>;
+}
+
+export default async function RetroPage({ params }: PageProps) {
+  const { token } = await params;
+  let initial = null;
+  try {
+    const base = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+    const res = await fetch(`${base}/api/retros/${token}`, {
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (res.ok) initial = await res.json();
+  } catch {
+    // Client will fetch with voterId
+  }
+  return (
+    <div className="akqaretro-page min-h-screen bg-[var(--background)] p-4 md:p-6">
+      <div className="akqaretro-page__wrap max-w-7xl mx-auto">
+        <a href="/" className="akqaretro-page__home mb-4 inline-block text-sm text-[var(--akqa-muted)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]">
+          ← New retrospective
+        </a>
+        <RetroBoard token={token} initial={initial} />
+        <RetroShareLink token={token} />
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,50 @@
+// Agile Retrospective - Data model
+// SQLite for MVP; switch provider to "postgresql" for production.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Retro {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  title     String
+  date      String   // ISO date
+  creatorId String?  // anonymous client id who created this retro (for "my retros" list)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cards     Card[]
+
+  @@index([creatorId])
+}
+
+model Card {
+  id        String   @id @default(uuid())
+  retroId   String
+  retro     Retro    @relation(fields: [retroId], references: [id], onDelete: Cascade)
+  column    String   // "positive" | "negative" | "actions"
+  text      String   @default("")
+  orderKey  String   // fractional ordering (e.g. "a", "m", "z") or numeric string
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  votes     Vote[]
+
+  @@index([retroId, column])
+}
+
+model Vote {
+  id        String   @id @default(uuid())
+  retroId   String
+  cardId    String
+  voterId   String   // anonymous client uuid; user can have multiple votes per card (up to 6 per retro total)
+  createdAt DateTime @default(now())
+  card      Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId, voterId])
+  @@index([retroId, voterId])
+}

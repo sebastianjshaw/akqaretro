@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* AKQA brand colours */
+:root {
+  --akqa-dove: #666666;
+  --akqa-white: #ffffff;
+  --akqa-dusty: #999999;
+  --background: var(--akqa-white);
+  --foreground: var(--akqa-dove);
+  --akqa-border: #e5e5e5;
+  --akqa-muted: var(--akqa-dusty);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #1a1a1a;
+    --foreground: var(--akqa-white);
+    --akqa-border: #404040;
+    --akqa-muted: var(--akqa-dusty);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Sharp edges on brand – override rounded utilities where used */
+.akqaretro-sharp {
+  border-radius: 0;
+}
