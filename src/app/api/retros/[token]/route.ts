@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { LIMITS } from "@/lib/validation";
 
 const VOTES_PER_USER = 6;
 
@@ -9,6 +10,9 @@ export async function GET(
 ) {
   try {
     const { token } = await params;
+    if (!token || token.length > 256) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 400 });
+    }
     const retro = await prisma.retro.findUnique({
       where: { token },
       include: {
@@ -23,7 +27,8 @@ export async function GET(
     if (!retro) {
       return NextResponse.json({ error: "Retro not found" }, { status: 404 });
     }
-    const voterId = _request.nextUrl.searchParams.get("voterId") ?? "";
+    const voterIdRaw = _request.nextUrl.searchParams.get("voterId") ?? "";
+    const voterId = voterIdRaw.slice(0, LIMITS.VOTER_ID_MAX_LENGTH);
     const cards = retro.cards.map((c) => {
       const userVotesOnCard = voterId ? c.votes.filter((v) => v.voterId === voterId).length : 0;
       return {

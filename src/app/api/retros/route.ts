@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateRetroToken } from "@/lib/token";
+import { LIMITS, clampLength } from "@/lib/validation";
 
 export async function GET(request: NextRequest) {
   try {
-    const creatorId = request.nextUrl.searchParams.get("creatorId") ?? "";
+    const creatorIdRaw = request.nextUrl.searchParams.get("creatorId") ?? "";
+    const creatorId = clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH);
     if (!creatorId) {
       return NextResponse.json({ error: "creatorId is required" }, { status: 400 });
     }
     const retros = await prisma.retro.findMany({
       where: { creatorId },
       orderBy: { createdAt: "desc" },
+      take: LIMITS.MY_RETROS_MAX,
       select: { id: true, token: true, title: true, date: true, createdAt: true },
     });
     return NextResponse.json(
@@ -31,10 +34,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    const title = String(body.title ?? "").trim();
-    const date = String(body.date ?? new Date().toISOString().slice(0, 10)).trim();
-    const creatorIdRaw = typeof body.creatorId === "string" ? body.creatorId.trim() : "";
-    const creatorId = creatorIdRaw || null;
+    const title = clampLength(String(body.title ?? ""), LIMITS.TITLE_MAX_LENGTH);
+    const date = String(body.date ?? new Date().toISOString().slice(0, 10)).trim().slice(0, 10);
+    const creatorIdRaw = typeof body.creatorId === "string" ? body.creatorId : "";
+    const creatorId = creatorIdRaw ? clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH) : null;
     if (!title) {
       return NextResponse.json({ error: "title is required" }, { status: 400 });
     }

@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { LIMITS } from "@/lib/validation";
+import { safeParseJson } from "@/lib/safeJson";
 
 const VOTES_PER_USER = 6;
+
+function validateVoterId(v: string): string | null {
+  const s = v.trim().slice(0, LIMITS.VOTER_ID_MAX_LENGTH);
+  return s || null;
+}
 
 export async function POST(
   request: NextRequest,
@@ -9,8 +16,8 @@ export async function POST(
 ) {
   try {
     const { cardId } = await params;
-    const body = await request.json().catch(() => ({}));
-    const voterId = String(body.voterId ?? "").trim();
+    const body = await safeParseJson<{ voterId?: string }>(request);
+    const voterId = body ? validateVoterId(String(body.voterId ?? "")) : null;
     if (!voterId) {
       return NextResponse.json({ error: "voterId is required" }, { status: 400 });
     }
@@ -52,7 +59,8 @@ export async function DELETE(
 ) {
   try {
     const { cardId } = await params;
-    const voterId = request.nextUrl.searchParams.get("voterId") ?? "";
+    const voterIdRaw = request.nextUrl.searchParams.get("voterId") ?? "";
+    const voterId = voterIdRaw.slice(0, LIMITS.VOTER_ID_MAX_LENGTH).trim();
     if (!voterId) {
       return NextResponse.json({ error: "voterId is required" }, { status: 400 });
     }

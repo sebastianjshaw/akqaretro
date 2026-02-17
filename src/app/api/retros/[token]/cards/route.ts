@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { nextOrderKey } from "@/lib/order";
+import { LIMITS, clampLength } from "@/lib/validation";
+import { safeParseJson } from "@/lib/safeJson";
 
 const COLUMNS = ["positive", "negative", "actions"] as const;
 
@@ -14,12 +16,15 @@ export async function POST(
     if (!retro) {
       return NextResponse.json({ error: "Retro not found" }, { status: 404 });
     }
-    const body = await request.json();
+    const body = await safeParseJson<{ column?: string; text?: string }>(request);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
     const column = String(body.column ?? "").toLowerCase();
     if (!COLUMNS.includes(column as (typeof COLUMNS)[number])) {
       return NextResponse.json({ error: "Invalid column" }, { status: 400 });
     }
-    const text = String(body.text ?? "").trim();
+    const text = clampLength(String(body.text ?? ""), LIMITS.CARD_TEXT_MAX_LENGTH);
     const lastInColumn = await prisma.card.findFirst({
       where: { retroId: retro.id, column },
       orderBy: { orderKey: "desc" },
@@ -39,6 +44,7 @@ export async function POST(
       updatedAt: card.updatedAt.toISOString(),
       voteCount: 0,
       userVoted: false,
+      userVotesOnCard: 0,
     });
   } catch (e) {
     console.error("POST /api/retros/[token]/cards", e);

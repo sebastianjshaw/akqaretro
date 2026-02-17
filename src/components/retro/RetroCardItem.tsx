@@ -158,7 +158,7 @@ export function RetroCardItem({ card, voterId, votesRemaining, onRefetch }: Retr
                   <button type="button" onClick={() => setIsEditing(true)} aria-label="Edit" className="akqaretro-card__edit flex items-center justify-center w-6 h-6 border border-[var(--akqa-border)] text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)] hover:bg-[var(--akqa-border)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)]">
                     <PencilIcon />
                   </button>
-                  <button type="button" onClick={handleDelete} disabled={deleting} aria-label="Delete card" className="akqaretro-card__delete flex items-center justify-center w-6 h-6 border border-[var(--akqa-border)] text-[var(--akqa-dusty)] hover:text-red-600 hover:border-red-600/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-red-500 disabled:opacity-50">
+                  <button type="button" onClick={handleDelete} disabled={deleting} aria-label="Delete card (confirmation required)" className="akqaretro-card__delete flex items-center justify-center w-6 h-6 border border-[var(--akqa-border)] text-[var(--akqa-dusty)] hover:text-red-600 hover:border-red-600/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-red-500 disabled:opacity-50">
                     <TrashIcon />
                   </button>
                 </div>

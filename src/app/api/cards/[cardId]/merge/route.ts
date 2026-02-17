@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { LIMITS } from "@/lib/validation";
+import { safeParseJson } from "@/lib/safeJson";
 
 const MERGE_SEPARATOR = "\n\n---\n\n";
 
@@ -13,8 +15,8 @@ export async function POST(
 ) {
   try {
     const targetCardId = (await params).cardId;
-    const body = await request.json().catch(() => ({}));
-    const sourceCardId = String(body.sourceCardId ?? "").trim();
+    const body = await safeParseJson<{ sourceCardId?: string }>(request);
+    const sourceCardId = body ? String(body.sourceCardId ?? "").trim().slice(0, 64) : "";
     if (!sourceCardId || sourceCardId === targetCardId) {
       return NextResponse.json(
         { error: "sourceCardId is required and must differ from target" },
@@ -40,7 +42,10 @@ export async function POST(
         { status: 400 }
       );
     }
-    const newText = target.text + MERGE_SEPARATOR + source.text;
+    const combined = target.text + MERGE_SEPARATOR + source.text;
+    const newText = combined.length > LIMITS.CARD_TEXT_MAX_LENGTH
+      ? combined.slice(0, LIMITS.CARD_TEXT_MAX_LENGTH)
+      : combined;
 
     await prisma.$transaction(async (tx) => {
       await tx.card.update({

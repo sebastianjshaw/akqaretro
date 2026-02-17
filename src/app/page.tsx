@@ -78,9 +78,9 @@ export default function Home() {
 
   return (
     <div className="akqaretro-landing min-h-screen bg-[var(--background)] flex flex-col items-center p-6">
-      <main className="akqaretro-landing__main w-full max-w-lg flex flex-col gap-8">
-        <section className="akqaretro-landing__create border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] shadow-lg p-8">
-          <h1 className="akqaretro-landing__title text-2xl font-bold text-[var(--foreground)] mb-2">
+      <div className="akqaretro-landing__main w-full max-w-lg flex flex-col gap-8">
+        <section className="akqaretro-landing__create border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] shadow-lg p-8" aria-labelledby="akqaretro-create-heading">
+          <h1 id="akqaretro-create-heading" className="akqaretro-landing__title text-2xl font-bold text-[var(--foreground)] mb-2">
             New retrospective
           </h1>
           <p className="akqaretro-landing__subtitle text-[var(--akqa-muted)] mb-6">
@@ -117,6 +117,8 @@ export default function Home() {
             <button
               type="submit"
               disabled={loading}
+              aria-busy={loading}
+              aria-disabled={loading}
               className="akqaretro-landing__submit mt-2 bg-[var(--akqa-dove)] text-[var(--akqa-white)] font-medium px-4 py-3 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] focus-visible:ring-offset-2 disabled:opacity-50"
             >
               {loading ? "Creating…" : "Create retrospective"}
@@ -150,7 +152,16 @@ export default function Home() {
             </ul>
           )}
         </section>
-      </main>
+        <PrivacyNotice />
+      </div>
     </div>
+  );
+}
+
+function PrivacyNotice() {
+  return (
+    <p className="akqaretro-landing__privacy text-xs text-[var(--akqa-muted)] max-w-lg" role="note">
+      This app stores an anonymous identifier in your browser to link your votes and created retros to this device. No account or personal data is collected.
+    </p>
   );
 }

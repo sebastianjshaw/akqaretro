@@ -19,31 +19,44 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
   const [error, setError] = useState("");
   const voterId = getVoterId();
 
-  const fetchRetro = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/retros/${token}?voterId=${encodeURIComponent(voterId)}`);
-      if (!res.ok) {
-        if (res.status === 404) setError("Retro not found");
-        return;
+  const fetchRetro = useCallback(
+    async (signal?: AbortSignal) => {
+      try {
+        const res = await fetch(
+          `/api/retros/${token}?voterId=${encodeURIComponent(voterId)}`,
+          { signal: signal ?? null }
+        );
+        if (!res.ok) {
+          if (res.status === 404) setError("Retro not found");
+          return;
+        }
+        const json = await res.json();
+        setData(json);
+        setError("");
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        setError("Failed to load retro");
+      } finally {
+        setLoading(false);
       }
-      const json = await res.json();
-      setData(json);
-      setError("");
-    } catch {
-      setError("Failed to load retro");
-    } finally {
-      setLoading(false);
-    }
-  }, [token, voterId]);
+    },
+    [token, voterId]
+  );
 
   useEffect(() => {
-    fetchRetro();
+    const ac = new AbortController();
+    fetchRetro(ac.signal);
+    return () => ac.abort();
   }, [fetchRetro]);
 
   useEffect(() => {
     if (!token) return;
-    const t = setInterval(fetchRetro, POLL_INTERVAL_MS);
-    return () => clearInterval(t);
+    const ac = new AbortController();
+    const t = setInterval(() => fetchRetro(ac.signal), POLL_INTERVAL_MS);
+    return () => {
+      clearInterval(t);
+      ac.abort();
+    };
   }, [token, fetchRetro]);
 
   const refetch = useCallback(() => {

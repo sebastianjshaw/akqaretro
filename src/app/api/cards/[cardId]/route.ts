@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { midpoint } from "@/lib/order";
+import { LIMITS, clampLength } from "@/lib/validation";
+import { safeParseJson } from "@/lib/safeJson";
 
 const COLUMNS = ["positive", "negative", "actions"] as const;
 
@@ -32,9 +34,12 @@ export async function PATCH(
     if (!card) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
-    const body = await request.json();
+    const body = await safeParseJson<{ text?: string; column?: string; orderKey?: string; newIndex?: number }>(request);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
     const updates: { text?: string; column?: string; orderKey?: string } = {};
-    if (typeof body.text === "string") updates.text = body.text;
+    if (typeof body.text === "string") updates.text = clampLength(body.text, LIMITS.CARD_TEXT_MAX_LENGTH);
     if (typeof body.column === "string" && COLUMNS.includes(body.column as (typeof COLUMNS)[number])) {
       updates.column = body.column;
     }
