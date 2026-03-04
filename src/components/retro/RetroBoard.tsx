@@ -5,7 +5,7 @@ import { getVoterId } from "@/lib/voterId";
 import { COLUMNS, type RetroState, type RetroCard, type ColumnType } from "@/types/retro";
 import { RetroColumn } from "./RetroColumn";
 
-const POLL_INTERVAL_MS = 4000;
+const POLL_INTERVAL_MS = 1500;
 
 interface RetroBoardProps {
   token: string;
@@ -56,6 +56,15 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
       clearInterval(t);
       ac.abort();
     };
+  }, [token, fetchRetro]);
+
+  useEffect(() => {
+    if (!token) return;
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") fetchRetro();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [token, fetchRetro]);
 
   const refetch = useCallback(() => {
