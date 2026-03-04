@@ -21,9 +21,11 @@ interface RetroColumnProps {
   votesRemaining: number;
   token: string;
   onRefetch: () => void;
+  onVoteAddOptimistic: (cardId: string) => void;
+  onVoteRemoveOptimistic: (cardId: string) => void;
 }
 
-export function RetroColumn({ column, cards, voterId, votesRemaining, token, onRefetch }: RetroColumnProps) {
+export function RetroColumn({ column, cards, voterId, votesRemaining, token, onRefetch, onVoteAddOptimistic, onVoteRemoveOptimistic }: RetroColumnProps) {
   const [hasDraft, setHasDraft] = useState(false);
 
   const sensors = useSensors(
@@ -109,6 +111,8 @@ export function RetroColumn({ column, cards, voterId, votesRemaining, token, onR
                 voterId={voterId}
                 votesRemaining={votesRemaining}
                 onRefetch={onRefetch}
+                onVoteAddOptimistic={onVoteAddOptimistic}
+                onVoteRemoveOptimistic={onVoteRemoveOptimistic}
               />
             ))}
           </SortableContext>

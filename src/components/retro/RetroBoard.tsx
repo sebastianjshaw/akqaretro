@@ -71,6 +71,34 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
     fetchRetro();
   }, [fetchRetro]);
 
+  const onVoteAddOptimistic = useCallback((cardId: string) => {
+    setData((prev) => {
+      if (!prev || prev.votesRemaining <= 0) return prev;
+      return {
+        ...prev,
+        votesRemaining: prev.votesRemaining - 1,
+        cards: prev.cards.map((c) =>
+          c.id === cardId ? { ...c, voteCount: c.voteCount + 1, userVotesOnCard: c.userVotesOnCard + 1 } : c
+        ),
+      };
+    });
+  }, []);
+
+  const onVoteRemoveOptimistic = useCallback((cardId: string) => {
+    setData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        votesRemaining: prev.votesRemaining + 1,
+        cards: prev.cards.map((c) =>
+          c.id === cardId && c.userVotesOnCard > 0
+            ? { ...c, voteCount: c.voteCount - 1, userVotesOnCard: c.userVotesOnCard - 1 }
+            : c
+        ),
+      };
+    });
+  }, []);
+
   // Must run before any conditional return so hook order is stable (React #310)
   const cardsByColumn = useMemo(
     () =>
@@ -132,6 +160,8 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
             votesRemaining={data.votesRemaining}
             token={token}
             onRefetch={refetch}
+            onVoteAddOptimistic={onVoteAddOptimistic}
+            onVoteRemoveOptimistic={onVoteRemoveOptimistic}
           />
         ))}
       </div>

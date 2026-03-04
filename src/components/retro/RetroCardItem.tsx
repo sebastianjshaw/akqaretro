@@ -27,9 +27,11 @@ interface RetroCardItemProps {
   voterId: string;
   votesRemaining: number;
   onRefetch: () => void;
+  onVoteAddOptimistic: (cardId: string) => void;
+  onVoteRemoveOptimistic: (cardId: string) => void;
 }
 
-function RetroCardItemInner({ card, voterId, votesRemaining, onRefetch }: RetroCardItemProps) {
+function RetroCardItemInner({ card, voterId, votesRemaining, onRefetch, onVoteAddOptimistic, onVoteRemoveOptimistic }: RetroCardItemProps) {
   const [text, setText] = useState(card.text);
   // Always start in view mode so other viewers never see an open text box; only the user who clicks Edit does
   const [isEditing, setIsEditing] = useState(false);
@@ -89,22 +91,32 @@ function RetroCardItemInner({ card, voterId, votesRemaining, onRefetch }: RetroC
 
   const handleVoteAdd = useCallback(async () => {
     if (votesRemaining <= 0) return;
-    const res = await fetch(`/api/cards/${card.id}/vote`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ voterId }),
-    });
-    if (res.ok) onRefetch();
-  }, [card.id, voterId, votesRemaining, onRefetch]);
+    onVoteAddOptimistic(card.id);
+    try {
+      const res = await fetch(`/api/cards/${card.id}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voterId }),
+      });
+      if (!res.ok) onRefetch();
+    } catch {
+      onRefetch();
+    }
+  }, [card.id, voterId, votesRemaining, onRefetch, onVoteAddOptimistic]);
 
   const handleVoteRemove = useCallback(async () => {
     if (card.userVotesOnCard <= 0) return;
-    const res = await fetch(
-      `/api/cards/${card.id}/vote?voterId=${encodeURIComponent(voterId)}`,
-      { method: "DELETE" }
-    );
-    if (res.ok) onRefetch();
-  }, [card.id, card.userVotesOnCard, voterId, onRefetch]);
+    onVoteRemoveOptimistic(card.id);
+    try {
+      const res = await fetch(
+        `/api/cards/${card.id}/vote?voterId=${encodeURIComponent(voterId)}`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) onRefetch();
+    } catch {
+      onRefetch();
+    }
+  }, [card.id, card.userVotesOnCard, voterId, onRefetch, onVoteRemoveOptimistic]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
