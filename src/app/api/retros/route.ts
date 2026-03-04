@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateRetroToken } from "@/lib/token";
 import { LIMITS, clampLength } from "@/lib/validation";
+import { safeParseJson } from "@/lib/safeJson";
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,7 +34,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}));
+    const body = await safeParseJson<{ title?: string; date?: string; creatorId?: string }>(request);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
     const title = clampLength(String(body.title ?? ""), LIMITS.TITLE_MAX_LENGTH);
     const date = String(body.date ?? new Date().toISOString().slice(0, 10)).trim().slice(0, 10);
     const creatorIdRaw = typeof body.creatorId === "string" ? body.creatorId : "";

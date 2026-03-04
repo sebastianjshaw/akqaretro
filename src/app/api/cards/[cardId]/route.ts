@@ -3,8 +3,7 @@ import { prisma } from "@/lib/db";
 import { midpoint } from "@/lib/order";
 import { LIMITS, clampLength } from "@/lib/validation";
 import { safeParseJson } from "@/lib/safeJson";
-
-const COLUMNS = ["positive", "negative", "actions"] as const;
+import { COLUMNS, type ColumnType } from "@/types/retro";
 
 export async function DELETE(
   _request: NextRequest,
@@ -40,7 +39,7 @@ export async function PATCH(
     }
     const updates: { text?: string; column?: string; orderKey?: string } = {};
     if (typeof body.text === "string") updates.text = clampLength(body.text, LIMITS.CARD_TEXT_MAX_LENGTH);
-    if (typeof body.column === "string" && COLUMNS.includes(body.column as (typeof COLUMNS)[number])) {
+    if (typeof body.column === "string" && COLUMNS.includes(body.column as ColumnType)) {
       updates.column = body.column;
     }
     if (typeof body.orderKey === "string") updates.orderKey = body.orderKey;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
@@ -29,7 +29,7 @@ interface RetroCardItemProps {
   onRefetch: () => void;
 }
 
-export function RetroCardItem({ card, voterId, votesRemaining, onRefetch }: RetroCardItemProps) {
+function RetroCardItemInner({ card, voterId, votesRemaining, onRefetch }: RetroCardItemProps) {
   const [text, setText] = useState(card.text);
   const [isEditing, setIsEditing] = useState(!card.text.trim());
   const [saving, setSaving] = useState(false);
@@ -52,7 +52,7 @@ export function RetroCardItem({ card, voterId, votesRemaining, onRefetch }: Retr
     setText(card.text);
   }, [card.text]);
 
-  async function handleSave() {
+  const handleSave = useCallback(async () => {
     const trimmed = text.trim();
     if (trimmed === card.text) {
       setIsEditing(false);
@@ -72,9 +72,9 @@ export function RetroCardItem({ card, voterId, votesRemaining, onRefetch }: Retr
     } finally {
       setSaving(false);
     }
-  }
+  }, [text, card.id, card.text, onRefetch]);
 
-  async function handleDelete() {
+  const handleDelete = useCallback(async () => {
     if (deleting || !confirm("Delete this card?")) return;
     setDeleting(true);
     try {
@@ -83,9 +83,9 @@ export function RetroCardItem({ card, voterId, votesRemaining, onRefetch }: Retr
     } finally {
       setDeleting(false);
     }
-  }
+  }, [card.id, deleting, onRefetch]);
 
-  async function handleVoteAdd() {
+  const handleVoteAdd = useCallback(async () => {
     if (votesRemaining <= 0) return;
     const res = await fetch(`/api/cards/${card.id}/vote`, {
       method: "POST",
@@ -93,16 +93,16 @@ export function RetroCardItem({ card, voterId, votesRemaining, onRefetch }: Retr
       body: JSON.stringify({ voterId }),
     });
     if (res.ok) onRefetch();
-  }
+  }, [card.id, voterId, votesRemaining, onRefetch]);
 
-  async function handleVoteRemove() {
+  const handleVoteRemove = useCallback(async () => {
     if (card.userVotesOnCard <= 0) return;
     const res = await fetch(
       `/api/cards/${card.id}/vote?voterId=${encodeURIComponent(voterId)}`,
       { method: "DELETE" }
     );
     if (res.ok) onRefetch();
-  }
+  }, [card.id, card.userVotesOnCard, voterId, onRefetch]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -117,35 +117,39 @@ export function RetroCardItem({ card, voterId, votesRemaining, onRefetch }: Retr
         isDragging ? "akqaretro-card--dragging opacity-80 shadow-md z-10" : ""
       } ${isMergeOver ? "akqaretro-card--merge-over ring-2 ring-[var(--akqa-dove)] ring-offset-2 dark:ring-offset-[#1a1a1a]" : ""} border-[var(--akqa-border)]`}
     >
-      <div ref={setMergeRef} className="akqaretro-card__inner flex gap-1.5 p-1.5">
-        <div
-          className="akqaretro-card__handle flex shrink-0 cursor-grab active:cursor-grabbing touch-none p-0.5 text-[var(--akqa-dusty)] hover:text-[var(--akqa-dove)] dark:hover:text-[var(--akqa-white)]"
-          aria-label="Drag to reorder or drop on another card to merge"
-          {...attributes}
-          {...listeners}
-        >
-          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
-            <path d="M7 2a2 2 0 012 2v12a2 2 0 01-2 2h6a2 2 0 01-2-2V4a2 2 0 012-2H7zm0 2v12h6V4H7z" />
-          </svg>
-        </div>
+      <div ref={setMergeRef} className={`akqaretro-card__inner flex gap-1.5 p-1.5 ${isEditing ? "akqaretro-card__inner--editing" : ""}`}>
+        {!isEditing && (
+          <div
+            className="akqaretro-card__handle flex shrink-0 cursor-grab active:cursor-grabbing touch-none p-0.5 text-[var(--akqa-dusty)] hover:text-[var(--akqa-dove)] dark:hover:text-[var(--akqa-white)]"
+            aria-label="Drag to reorder or drop on another card to merge"
+            {...attributes}
+            {...listeners}
+          >
+            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
+              <path d="M7 2a2 2 0 012 2v12a2 2 0 01-2 2h6a2 2 0 01-2-2V4a2 2 0 012-2H7zm0 2v12h6V4H7z" />
+            </svg>
+          </div>
+        )}
         <div className="akqaretro-card__body flex-1 min-w-0 flex flex-col gap-1">
           {isEditing ? (
-            /* Unsaved: compact input bar, Save + Cancel only (no votes) */
-            <div className="akqaretro-card__edit-row flex items-center gap-1 w-full">
+            /* Data entry: full-width textarea (3 lines), then X and Tick below */
+            <div className="akqaretro-card__edit-wrap flex flex-col gap-2 w-full">
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Type something…"
-                rows={1}
-                className="akqaretro-card__textarea flex-1 min-w-0 min-h-[1.75rem] max-h-24 resize-y border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#1a1a1a] text-[var(--foreground)] px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-[var(--akqa-dove)] leading-tight"
+                rows={3}
+                className="akqaretro-card__textarea w-full min-h-[4.5rem] resize-y border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#1a1a1a] text-[var(--foreground)] px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--akqa-dove)] leading-tight"
                 aria-label="Card content"
               />
-              <button type="button" onClick={() => { setIsEditing(false); setText(card.text); }} aria-label="Cancel" className="akqaretro-card__cancel flex shrink-0 items-center justify-center w-6 h-6 border border-[var(--akqa-border)] text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)] hover:bg-[var(--akqa-border)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)]">
-                <XIcon />
-              </button>
-              <button type="button" onClick={handleSave} disabled={saving} aria-label="Save" className="akqaretro-card__save flex shrink-0 items-center justify-center w-6 h-6 bg-[var(--akqa-dove)] text-[var(--akqa-white)] hover:opacity-90 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)] disabled:opacity-50">
-                {saving ? <span className="text-[10px]">…</span> : <CheckIcon />}
-              </button>
+              <div className="akqaretro-card__edit-actions flex items-center justify-end gap-1">
+                <button type="button" onClick={() => { setIsEditing(false); setText(card.text); }} aria-label="Cancel" className="akqaretro-card__cancel flex items-center justify-center w-6 h-6 border border-[var(--akqa-border)] text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)] hover:bg-[var(--akqa-border)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)]">
+                  <XIcon />
+                </button>
+                <button type="button" onClick={handleSave} disabled={saving} aria-label="Save" className="akqaretro-card__save flex items-center justify-center w-6 h-6 bg-[var(--akqa-dove)] text-[var(--akqa-white)] hover:opacity-90 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)] disabled:opacity-50">
+                  {saving ? <span className="text-[10px]">…</span> : <CheckIcon />}
+                </button>
+              </div>
             </div>
           ) : (
             /* Saved: show text, then actions + votes (votes only visible when saved) */
@@ -178,3 +182,5 @@ export function RetroCardItem({ card, voterId, votesRemaining, onRefetch }: Retr
     </div>
   );
 }
+
+export const RetroCardItem = React.memo(RetroCardItemInner);

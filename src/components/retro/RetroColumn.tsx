@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -10,15 +10,8 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import type { ColumnType } from "@/types/retro";
-import type { RetroCard } from "@/types/retro";
+import { COLUMN_LABELS, type ColumnType, type RetroCard } from "@/types/retro";
 import { RetroCardItem } from "./RetroCardItem";
-
-const COLUMN_LABELS: Record<ColumnType, string> = {
-  positive: "Positive",
-  negative: "Negative",
-  actions: "Actions",
-};
 
 interface RetroColumnProps {
   column: ColumnType;
@@ -37,7 +30,7 @@ export function RetroColumn({ column, cards, voterId, votesRemaining, token, onR
     useSensor(KeyboardSensor)
   );
 
-  async function handleAddCard() {
+  const handleAddCard = useCallback(async () => {
     setAdding(true);
     try {
       const res = await fetch(`/api/retros/${token}/cards`, {
@@ -48,42 +41,50 @@ export function RetroColumn({ column, cards, voterId, votesRemaining, token, onR
       if (!res.ok) throw new Error("Failed to add card");
       onRefetch();
     } catch {
+      // Leave adding false on error so user can retry
+    } finally {
       setAdding(false);
     }
-  }
+  }, [token, column, onRefetch]);
 
-  async function handleReorder(activeId: string, overId: string) {
-    const overIsMerge = String(overId).startsWith("merge-");
-    if (overIsMerge) {
-      const targetCardId = String(overId).replace(/^merge-/, "");
-      if (targetCardId === activeId) return;
-      const res = await fetch(`/api/cards/${targetCardId}/merge`, {
-        method: "POST",
+  const handleReorder = useCallback(
+    async (activeId: string, overId: string) => {
+      const overIsMerge = String(overId).startsWith("merge-");
+      if (overIsMerge) {
+        const targetCardId = String(overId).replace(/^merge-/, "");
+        if (targetCardId === activeId) return;
+        const res = await fetch(`/api/cards/${targetCardId}/merge`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sourceCardId: activeId }),
+        });
+        if (!res.ok) return;
+        onRefetch();
+        return;
+      }
+      const sortedIds = cards.map((c) => c.id);
+      const oldIndex = sortedIds.indexOf(activeId);
+      const newIndex = sortedIds.indexOf(overId as string);
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+      const res = await fetch(`/api/cards/${activeId}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sourceCardId: activeId }),
+        body: JSON.stringify({ newIndex }),
       });
       if (!res.ok) return;
       onRefetch();
-      return;
-    }
-    const sortedIds = cards.map((c) => c.id);
-    const oldIndex = sortedIds.indexOf(activeId);
-    const newIndex = sortedIds.indexOf(overId as string);
-    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
-    const res = await fetch(`/api/cards/${activeId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ newIndex }),
-    });
-    if (!res.ok) return;
-    onRefetch();
-  }
+    },
+    [cards, onRefetch]
+  );
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over) return;
-    handleReorder(String(active.id), String(over.id));
-  }
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over) return;
+      handleReorder(String(active.id), String(over.id));
+    },
+    [handleReorder]
+  );
 
   return (
     <div className="akqaretro-column flex flex-col border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] min-h-[320px] min-w-0">

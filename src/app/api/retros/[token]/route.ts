@@ -44,9 +44,7 @@ export async function GET(
         userVotesOnCard,
       };
     });
-    const userVoteCount = voterId
-      ? await prisma.vote.count({ where: { retroId: retro.id, voterId } })
-      : 0;
+    const userVoteCount = voterId ? cards.reduce((sum, c) => sum + c.userVotesOnCard, 0) : 0;
     return NextResponse.json({
       id: retro.id,
       token: retro.token,

@@ -1,5 +1,13 @@
 export type ColumnType = "positive" | "negative" | "actions";
 
+export const COLUMNS: readonly ColumnType[] = ["positive", "negative", "actions"];
+
+export const COLUMN_LABELS: Record<ColumnType, string> = {
+  positive: "Positive",
+  negative: "Negative",
+  actions: "Actions",
+};
+
 export interface RetroCard {
   id: string;
   retroId: string;

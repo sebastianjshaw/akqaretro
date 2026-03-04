@@ -1,12 +1,22 @@
+const MAX_ORDER_KEY_LEN = 12;
+
+function safeParseBase36(s: string): number {
+  const truncated = s.slice(0, MAX_ORDER_KEY_LEN);
+  const n = parseInt(truncated, 36);
+  return Number.isNaN(n) ? 0 : n;
+}
+
 /**
  * Fractional ordering: insert between two keys without reindexing.
  * Keys are base-36 strings; midpoint returns a string between a and b.
- * If a >= b we append "0" to a (new key after a).
+ * Long keys are truncated to avoid parseInt precision issues.
  */
 export function midpoint(a: string, b: string): string {
-  const maxLen = Math.max(a.length, b.length);
-  let aNum = parseInt(a, 36) || 0;
-  let bNum = parseInt(b, 36) || 0;
+  const aSafe = a.slice(0, MAX_ORDER_KEY_LEN);
+  const bSafe = b.slice(0, MAX_ORDER_KEY_LEN);
+  const maxLen = Math.min(MAX_ORDER_KEY_LEN, Math.max(aSafe.length, bSafe.length));
+  let aNum = safeParseBase36(aSafe);
+  let bNum = safeParseBase36(bSafe);
   const range = 36 ** maxLen;
   if (aNum >= bNum) {
     bNum = aNum + range;
@@ -14,7 +24,7 @@ export function midpoint(a: string, b: string): string {
   const mid = Math.floor((aNum + bNum) / 2);
   let s = mid.toString(36);
   if (s.length < maxLen) s = s.padStart(maxLen, "0");
-  return s;
+  return s.slice(0, MAX_ORDER_KEY_LEN);
 }
 
 /** Initial order key for first card in a column. */

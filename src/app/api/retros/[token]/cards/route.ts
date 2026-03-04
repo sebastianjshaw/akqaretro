@@ -3,8 +3,7 @@ import { prisma } from "@/lib/db";
 import { nextOrderKey } from "@/lib/order";
 import { LIMITS, clampLength } from "@/lib/validation";
 import { safeParseJson } from "@/lib/safeJson";
-
-const COLUMNS = ["positive", "negative", "actions"] as const;
+import { COLUMNS, type ColumnType } from "@/types/retro";
 
 export async function POST(
   request: NextRequest,
@@ -21,7 +20,7 @@ export async function POST(
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
     const column = String(body.column ?? "").toLowerCase();
-    if (!COLUMNS.includes(column as (typeof COLUMNS)[number])) {
+    if (!COLUMNS.includes(column as ColumnType)) {
       return NextResponse.json({ error: "Invalid column" }, { status: 400 });
     }
     const text = clampLength(String(body.text ?? ""), LIMITS.CARD_TEXT_MAX_LENGTH);

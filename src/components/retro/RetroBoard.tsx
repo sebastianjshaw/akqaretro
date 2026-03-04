@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getVoterId } from "@/lib/voterId";
-import type { RetroState, RetroCard, ColumnType } from "@/types/retro";
+import { COLUMNS, type RetroState, type RetroCard, type ColumnType } from "@/types/retro";
 import { RetroColumn } from "./RetroColumn";
 
-const COLUMNS: ColumnType[] = ["positive", "negative", "actions"];
 const POLL_INTERVAL_MS = 4000;
 
 interface RetroBoardProps {
@@ -77,15 +76,24 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
       </div>
     );
   }
-  if (!data) return null;
 
-  const cardsByColumn = COLUMNS.reduce(
-    (acc, col) => {
-      acc[col] = data.cards.filter((c) => c.column === col).sort((a, b) => (a.orderKey < b.orderKey ? -1 : 1));
-      return acc;
-    },
-    {} as Record<ColumnType, RetroCard[]>
+  const cardsByColumn = useMemo(
+    () =>
+      data
+        ? COLUMNS.reduce(
+            (acc, col) => {
+              acc[col] = data.cards
+                .filter((c) => c.column === col)
+                .sort((a, b) => (a.orderKey < b.orderKey ? -1 : 1));
+              return acc;
+            },
+            {} as Record<ColumnType, RetroCard[]>
+          )
+        : ({} as Record<ColumnType, RetroCard[]>),
+    [data]
   );
+
+  if (!data) return null;
 
   return (
     <div className="akqaretro-board flex flex-col gap-6">
