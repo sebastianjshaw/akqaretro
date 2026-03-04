@@ -30,6 +30,9 @@ export default function RootLayout({
           Skip to content
         </a>
         <AKQALogo />
+        <p className="akqaretro-prime-directive text-center text-sm text-[var(--akqa-muted)] px-4 pt-2 pb-4 max-w-2xl mx-auto italic">
+          Regardless of what we discover, we understand and truly believe that everyone did the best job they could, given what they knew at the time, their skills and abilities, the resources available, and the situation at hand.
+        </p>
         <main id="akqaretro-main">{children}</main>
       </body>
     </html>

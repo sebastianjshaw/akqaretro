@@ -31,7 +31,8 @@ interface RetroCardItemProps {
 
 function RetroCardItemInner({ card, voterId, votesRemaining, onRefetch }: RetroCardItemProps) {
   const [text, setText] = useState(card.text);
-  const [isEditing, setIsEditing] = useState(!card.text.trim());
+  // Always start in view mode so other viewers never see an open text box; only the user who clicks Edit does
+  const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -48,9 +49,10 @@ function RetroCardItemInner({ card, voterId, votesRemaining, onRefetch }: RetroC
     id: `merge-${card.id}`,
   });
 
+  // Only sync server text when not editing, so others' refetch doesn't overwrite in-progress typing
   useEffect(() => {
-    setText(card.text);
-  }, [card.text]);
+    if (!isEditing) setText(card.text);
+  }, [card.text, isEditing]);
 
   const handleSave = useCallback(async () => {
     const trimmed = text.trim();

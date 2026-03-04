@@ -12,6 +12,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { COLUMN_LABELS, type ColumnType, type RetroCard } from "@/types/retro";
 import { RetroCardItem } from "./RetroCardItem";
+import { RetroDraftCard } from "./RetroDraftCard";
 
 interface RetroColumnProps {
   column: ColumnType;
@@ -23,29 +24,25 @@ interface RetroColumnProps {
 }
 
 export function RetroColumn({ column, cards, voterId, votesRemaining, token, onRefetch }: RetroColumnProps) {
-  const [adding, setAdding] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor)
   );
 
-  const handleAddCard = useCallback(async () => {
-    setAdding(true);
-    try {
-      const res = await fetch(`/api/retros/${token}/cards`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ column, text: "" }),
-      });
-      if (!res.ok) throw new Error("Failed to add card");
-      onRefetch();
-    } catch {
-      // Leave adding false on error so user can retry
-    } finally {
-      setAdding(false);
-    }
-  }, [token, column, onRefetch]);
+  const handleAddCard = useCallback(() => {
+    setHasDraft(true);
+  }, []);
+
+  const handleDraftSaved = useCallback(() => {
+    setHasDraft(false);
+    onRefetch();
+  }, [onRefetch]);
+
+  const handleDraftCancel = useCallback(() => {
+    setHasDraft(false);
+  }, []);
 
   const handleReorder = useCallback(
     async (activeId: string, overId: string) => {
@@ -95,11 +92,11 @@ export function RetroColumn({ column, cards, voterId, votesRemaining, token, onR
         <button
           type="button"
           onClick={handleAddCard}
-          disabled={adding}
+          disabled={hasDraft}
           className="akqaretro-column__add bg-[var(--akqa-dove)] text-[var(--akqa-white)] px-4 py-2 text-sm font-medium hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] focus-visible:ring-offset-2 disabled:opacity-50"
           aria-label={`Add card to ${COLUMN_LABELS[column]}`}
         >
-          {adding ? "Adding…" : "Add"}
+          Add
         </button>
       </div>
       <div className="akqaretro-column__list flex-1 p-4 overflow-auto min-h-0">
@@ -115,6 +112,14 @@ export function RetroColumn({ column, cards, voterId, votesRemaining, token, onR
               />
             ))}
           </SortableContext>
+          {hasDraft && (
+            <RetroDraftCard
+              token={token}
+              column={column}
+              onSaved={handleDraftSaved}
+              onCancel={handleDraftCancel}
+            />
+          )}
         </DndContext>
       </div>
     </div>
