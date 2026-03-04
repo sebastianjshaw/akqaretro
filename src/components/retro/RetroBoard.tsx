@@ -62,21 +62,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
     fetchRetro();
   }, [fetchRetro]);
 
-  if (loading && !data) {
-    return (
-      <div className="akqaretro-board akqaretro-board--loading flex min-h-[40vh] items-center justify-center text-[var(--akqa-muted)]" role="status" aria-live="polite">
-        Loading…
-      </div>
-    );
-  }
-  if (error && !data) {
-    return (
-      <div className="akqaretro-board akqaretro-board--error flex min-h-[40vh] items-center justify-center text-red-600" role="alert">
-        {error}
-      </div>
-    );
-  }
-
+  // Must run before any conditional return so hook order is stable (React #310)
   const cardsByColumn = useMemo(
     () =>
       data
@@ -93,6 +79,20 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
     [data]
   );
 
+  if (loading && !data) {
+    return (
+      <div className="akqaretro-board akqaretro-board--loading flex min-h-[40vh] items-center justify-center text-[var(--akqa-muted)]" role="status" aria-live="polite">
+        Loading…
+      </div>
+    );
+  }
+  if (error && !data) {
+    return (
+      <div className="akqaretro-board akqaretro-board--error flex min-h-[40vh] items-center justify-center text-red-600" role="alert">
+        {error}
+      </div>
+    );
+  }
   if (!data) return null;
 
   return (
