@@ -56,10 +56,12 @@ export async function POST(request: NextRequest) {
       id: retro.id,
     });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Failed to create retro";
-    console.error("POST /api/retros", e);
+    const err = e instanceof Error ? e : new Error(String(e));
+    // Log full error for Vercel (Functions → Logs); safe for prod (not sent to client)
+    console.error("POST /api/retros", err.message, err.stack);
+    if ("code" in err) console.error("POST /api/retros code", (err as { code?: string }).code);
     return NextResponse.json(
-      { error: process.env.NODE_ENV === "development" ? message : "Failed to create retro" },
+      { error: process.env.NODE_ENV === "development" ? err.message : "Failed to create retro" },
       { status: 500 }
     );
   }

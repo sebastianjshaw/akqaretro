@@ -14,19 +14,9 @@
 2. **Environment variables** (Production, Preview, Development):
    - `DATABASE_URL` = Neon pooled connection string
    - `DIRECT_URL` = Neon direct connection string
-3. Deploy. Build runs `prisma generate`; migrations are **not** run automatically.
+3. Deploy. The build runs **migrations against your Neon DB** (using `DATABASE_URL` and `DIRECT_URL` from Vercel), then builds the app. No need to run migrations from your machine.
 
-## 3. Run migrations once
-
-From your machine (with Neon env in `.env`):
-
-```bash
-npx prisma migrate deploy
-```
-
-Or in Vercel: **Settings → General → Build & Development Settings**: set **Build Command** to e.g. `prisma generate && prisma migrate deploy && next build` so each deploy applies pending migrations.
-
-## 4. Local dev with Neon
+## 3. Local dev with Neon
 
 In `.env`:
 
@@ -43,3 +33,12 @@ npm run dev
 ```
 
 For local SQLite instead, switch `provider` in `prisma/schema.prisma` to `sqlite` and use `DATABASE_URL="file:./dev.db"` (no `directUrl`).
+
+---
+
+## Debugging 500 on create retro
+
+1. **Vercel logs:** Project → **Logs** (or **Deployments** → latest → **Functions**). Reproduce the error, then check the server log for `POST /api/retros` — the real error and optional `code` (e.g. Prisma `P1001`) are logged there.
+2. **Env:** In Vercel → **Settings** → **Environment Variables**, confirm `DATABASE_URL` (and `DIRECT_URL`) are set for Production and that **Build** ran after adding them.
+3. **Migrations:** If the log says the table/relation does not exist, redeploy so the build runs `prisma migrate deploy` (it’s in the default build script). Ensure `DIRECT_URL` is set in Vercel—migrations use it.
+4. **Neon URL:** Connection string should include `?sslmode=require` (Neon usually adds this). If you see a connection/timeout error, re-copy the pooled URL from Neon and ensure no typo.
