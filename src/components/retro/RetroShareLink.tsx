@@ -15,7 +15,7 @@ export function RetroShareLink({ token }: { token: string }) {
   }
 
   return (
-    <div className="akqaretro-share mt-6 flex flex-wrap items-center gap-2 text-sm text-[var(--akqa-muted)]">
+    <div className="akqaretro-share mt-6 flex flex-wrap items-center gap-2 akqaretro-caption text-[var(--akqa-muted)]">
       <span className="akqaretro-share__label">Share link:</span>
       <button
         type="button"
@@ -25,7 +25,7 @@ export function RetroShareLink({ token }: { token: string }) {
       >
         {copied ? "Copied!" : "Copy"}
       </button>
-      <code className="akqaretro-share__url truncate max-w-[240px] border border-[var(--akqa-border)] px-2 py-1 text-xs">
+      <code className="akqaretro-share__url truncate max-w-[240px] border border-[var(--akqa-border)] px-2 py-1 akqaretro-caption">
         /r/{token}
       </code>
     </div>

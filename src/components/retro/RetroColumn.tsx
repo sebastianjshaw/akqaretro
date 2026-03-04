@@ -86,7 +86,7 @@ export function RetroColumn({ column, cards, voterId, votesRemaining, token, onR
   return (
     <div className="akqaretro-column flex flex-col border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] min-h-[320px] min-w-0">
       <div className="akqaretro-column__header flex items-center justify-between p-4 border-b border-[var(--akqa-border)]">
-        <h2 className="akqaretro-column__title text-lg font-semibold text-[var(--foreground)]">
+        <h2 className="akqaretro-column__title akqaretro-headline text-lg font-normal text-[var(--foreground)]">
           {COLUMN_LABELS[column]}
         </h2>
         <button

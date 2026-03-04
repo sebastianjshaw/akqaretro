@@ -1,21 +1,48 @@
 @import "tailwindcss";
 
-/* AKQA brand colours */
+/* AKQA Brand Guidelines 2026 – Season by Displaay */
+@font-face {
+  font-family: "Season Mix";
+  src: url("/fonts/SeasonMix-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Season Sans";
+  src: url("/fonts/SeasonSans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Season Serif";
+  src: url("/fonts/SeasonSerif-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* AKQA brand colours – strong contrast for text (#000 / #FFF per guidelines) */
 :root {
   --akqa-dove: #666666;
   --akqa-white: #ffffff;
+  --akqa-black: #000000;
   --akqa-dusty: #999999;
   --background: var(--akqa-white);
-  --foreground: var(--akqa-dove);
+  --foreground: var(--akqa-black);
   --akqa-border: #e5e5e5;
   --akqa-muted: var(--akqa-dusty);
+  --font-season-mix: "Season Mix", serif;
+  --font-season-sans: "Season Sans", system-ui, sans-serif;
+  --font-season-serif: "Season Serif", Georgia, serif;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-season-sans);
+  --font-mono: ui-monospace, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,8 +57,18 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-season-sans);
+  line-height: 1.6;
 }
+
+/* AKQA typography – headlines ALL CAPS; subtitles/body sentence case */
+.akqaretro-font-mix { font-family: var(--font-season-mix); }
+.akqaretro-font-sans { font-family: var(--font-season-sans); }
+.akqaretro-font-serif { font-family: var(--font-season-serif); }
+.akqaretro-headline { font-family: var(--font-season-sans); text-transform: uppercase; letter-spacing: 0.02em; }
+.akqaretro-headline-mix { font-family: var(--font-season-mix); text-transform: uppercase; letter-spacing: 0.02em; }
+.akqaretro-subtitle { font-family: var(--font-season-serif); }
+.akqaretro-caption { font-size: 0.8rem; line-height: 1.4; }
 
 /* Sharp edges on brand – override rounded utilities where used */
 .akqaretro-sharp {

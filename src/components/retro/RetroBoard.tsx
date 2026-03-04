@@ -99,16 +99,16 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
     <div className="akqaretro-board flex flex-col gap-6">
       <header className="akqaretro-board__header flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="akqaretro-board__title text-xl font-bold text-[var(--foreground)]">
+          <h1 className="akqaretro-board__title akqaretro-headline text-xl font-normal text-[var(--foreground)]">
             {data.title}
           </h1>
-          <p className="akqaretro-board__date text-sm text-[var(--akqa-muted)]">{data.date}</p>
+          <p className="akqaretro-board__date akqaretro-caption text-[var(--akqa-muted)]">{data.date}</p>
         </div>
-        <div className="akqaretro-board__votes flex items-center gap-2 border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] px-4 py-2 text-sm" role="status" aria-live="polite">
+        <div className="akqaretro-board__votes flex items-center gap-2 border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] px-4 py-2 akqaretro-caption" role="status" aria-live="polite">
           <span className="akqaretro-board__votes-label text-[var(--akqa-muted)]">
             Your votes:
           </span>
-          <span className="akqaretro-board__votes-remaining font-medium text-[var(--foreground)]">
+          <span className="akqaretro-board__votes-remaining text-[var(--foreground)]">
             {data.votesRemaining} / {data.votesPerUserCap} left
           </span>
         </div>

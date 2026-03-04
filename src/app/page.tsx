@@ -80,14 +80,14 @@ export default function Home() {
     <div className="akqaretro-landing min-h-screen bg-[var(--background)] flex flex-col items-center p-6">
       <div className="akqaretro-landing__main w-full max-w-lg flex flex-col gap-8">
         <section className="akqaretro-landing__create border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] shadow-lg p-8" aria-labelledby="akqaretro-create-heading">
-          <h1 id="akqaretro-create-heading" className="akqaretro-landing__title text-2xl font-bold text-[var(--foreground)] mb-2">
+          <h1 id="akqaretro-create-heading" className="akqaretro-landing__title akqaretro-headline text-2xl font-normal text-[var(--foreground)] mb-2 tracking-wide">
             New retrospective
           </h1>
-          <p className="akqaretro-landing__subtitle text-[var(--akqa-muted)] mb-6">
+          <p className="akqaretro-landing__subtitle akqaretro-subtitle text-sm leading-snug text-[var(--akqa-muted)] mb-6">
             Create a board and share the link with your team.
           </p>
           <form onSubmit={handleSubmit} className="akqaretro-landing__form flex flex-col gap-4">
-            <label htmlFor="akqaretro-title" className="akqaretro-landing__label text-sm font-medium text-[var(--foreground)]">
+            <label htmlFor="akqaretro-title" className="akqaretro-landing__label text-sm text-[var(--foreground)]">
               Title
             </label>
             <input
@@ -99,7 +99,7 @@ export default function Home() {
               className="akqaretro-landing__input w-full border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#1a1a1a] text-[var(--foreground)] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--akqa-dove)]"
               required
             />
-            <label htmlFor="akqaretro-date" className="akqaretro-landing__label text-sm font-medium text-[var(--foreground)]">
+            <label htmlFor="akqaretro-date" className="akqaretro-landing__label text-sm text-[var(--foreground)]">
               Date
             </label>
             <input
@@ -127,13 +127,13 @@ export default function Home() {
         </section>
 
         <section className="akqaretro-landing__my-retros border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] p-6" aria-labelledby="akqaretro-my-retros-heading">
-          <h2 id="akqaretro-my-retros-heading" className="akqaretro-landing__my-retros-title text-lg font-semibold text-[var(--foreground)] mb-3">
+          <h2 id="akqaretro-my-retros-heading" className="akqaretro-landing__my-retros-title akqaretro-headline text-lg font-normal text-[var(--foreground)] mb-3 tracking-wide">
             My retros
           </h2>
           {loadingList ? (
-            <p className="akqaretro-landing__my-retros-loading text-sm text-[var(--akqa-muted)]">Loading…</p>
+            <p className="akqaretro-landing__my-retros-loading akqaretro-caption text-[var(--akqa-muted)]">Loading…</p>
           ) : myRetros.length === 0 ? (
-            <p className="akqaretro-landing__my-retros-empty text-sm text-[var(--akqa-muted)]">
+            <p className="akqaretro-landing__my-retros-empty akqaretro-caption text-[var(--akqa-muted)]">
               Retros you create on this device will appear here.
             </p>
           ) : (
@@ -145,7 +145,7 @@ export default function Home() {
                     className="akqaretro-landing__my-retros-link flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 py-2 px-0 border-b border-[var(--akqa-border)] last:border-0 text-[var(--foreground)] no-underline hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"
                   >
                     <span className="font-medium">{retro.title}</span>
-                    <span className="text-xs text-[var(--akqa-muted)]">{formatDate(retro.date)}</span>
+                    <span className="akqaretro-caption text-[var(--akqa-muted)]">{formatDate(retro.date)}</span>
                   </a>
                 </li>
               ))}
@@ -160,7 +160,7 @@ export default function Home() {
 
 function PrivacyNotice() {
   return (
-    <p className="akqaretro-landing__privacy text-xs text-[var(--akqa-muted)] max-w-lg" role="note">
+    <p className="akqaretro-landing__privacy akqaretro-caption text-[var(--akqa-muted)] max-w-lg" role="note">
       This app stores an anonymous identifier in your browser to link your votes and created retros to this device. No account or personal data is collected.
     </p>
   );
