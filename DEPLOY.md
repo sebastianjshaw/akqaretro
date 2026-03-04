@@ -3,8 +3,10 @@
 ## 1. Neon
 
 1. Create a project at [neon.tech](https://neon.tech).
-2. Copy **Connection string** (pooled) → use as `DATABASE_URL`.
-3. In Neon dashboard, open **Connection details** and copy **Direct connection** → use as `DIRECT_URL`.
+2. On the project dashboard, click **Connect** to open the “Connect to your database” modal.
+3. **Pooled (for `DATABASE_URL`):** Leave **Connection pooling** turned **on**. Copy the connection string → use as `DATABASE_URL`.
+4. **Direct (for `DIRECT_URL`):** Turn **Connection pooling** **off** in the same modal. Copy the new connection string → use as `DIRECT_URL`.  
+   (Direct = hostname without `-pooler`; Prisma needs this for migrations.)
 
 ## 2. Vercel
 
