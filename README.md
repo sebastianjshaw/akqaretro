@@ -6,7 +6,7 @@ Web-hosted retrospective board with three columns (Positive, Negative, Actions),
 
 - **Frontend:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS
 - **Backend:** Next.js API routes (serverless)
-- **Database:** SQLite (Prisma) for MVP; switch `provider` in `prisma/schema.prisma` to `postgresql` for production
+- **Database:** PostgreSQL (Prisma + Neon). Migrations are Postgres-only; see `DEPLOY.md` for Vercel + Neon.
 - **DnD:** @dnd-kit (core, sortable, utilities)
 - **Multi-user sync:** Polling every 4s (MVP); WebSockets/SSE can be added later
 
@@ -14,7 +14,7 @@ Web-hosted retrospective board with three columns (Positive, Negative, Actions),
 
 ```bash
 npm install
-npx prisma migrate dev   # already applied if dev.db exists
+npx prisma migrate deploy   # use with Neon; or migrate dev for local
 npm run dev
 ```
 
@@ -68,10 +68,11 @@ Open http://localhost:3000 → create a retro → share `/r/{token}` with the te
 ## Non-functional
 
 - **Security:** Token-based access; add rate limiting on `POST /api/retros` and write endpoints in production.
-- **Persistence:** SQLite file `prisma/dev.db`; use Postgres and env `DATABASE_URL` for production.
+- **Persistence:** Postgres (Neon); set `DATABASE_URL` and `DIRECT_URL` in Vercel and run `prisma migrate deploy` once (see `DEPLOY.md`).
 - **Performance:** Fractional ordering avoids full reindex on move; 50+ cards per column should stay responsive.
 
 ## Environment
 
-- `DATABASE_URL`: e.g. `file:./dev.db` (SQLite) or Postgres URL.
+- `DATABASE_URL`: Neon pooled Postgres URL.
+- `DIRECT_URL`: Neon direct Postgres URL (for migrations).
 - Optional: `NEXT_PUBLIC_APP_URL` or `VERCEL_URL` for server-side fetch of retro (SSR).
