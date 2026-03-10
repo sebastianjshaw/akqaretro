@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getVoterId } from "@/lib/voterId";
 import { COLUMNS, type RetroState, type RetroCard, type ColumnType } from "@/types/retro";
 import { RetroColumn } from "./RetroColumn";
@@ -16,7 +16,9 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
   const [data, setData] = useState<RetroState | null>(initial ?? null);
   const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState("");
-  const voterId = getVoterId();
+  const voterIdRef = useRef<string | undefined>(undefined);
+  if (voterIdRef.current === undefined) voterIdRef.current = getVoterId();
+  const voterId = voterIdRef.current;
 
   const fetchRetro = useCallback(
     async (signal?: AbortSignal) => {
@@ -60,11 +62,18 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
 
   useEffect(() => {
     if (!token) return;
+    let ac: AbortController | null = null;
     const onVisibility = () => {
-      if (document.visibilityState === "visible") fetchRetro();
+      if (document.visibilityState === "visible") {
+        ac = new AbortController();
+        fetchRetro(ac.signal);
+      }
     };
     document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      ac?.abort();
+    };
   }, [token, fetchRetro]);
 
   const refetch = useCallback(() => {
@@ -100,12 +109,14 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
   }, []);
 
   // Must run before any conditional return so hook order is stable (React #310)
+  // Depend only on data.cards — vote count changes (votesRemaining) don't affect grouping
+  const cards = data?.cards;
   const cardsByColumn = useMemo(
     () =>
-      data
+      cards
         ? COLUMNS.reduce(
             (acc, col) => {
-              acc[col] = data.cards
+              acc[col] = cards
                 .filter((c) => c.column === col)
                 .sort((a, b) => (a.orderKey < b.orderKey ? -1 : 1));
               return acc;
@@ -113,7 +124,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
             {} as Record<ColumnType, RetroCard[]>
           )
         : ({} as Record<ColumnType, RetroCard[]>),
-    [data]
+    [cards]
   );
 
   if (loading && !data) {
