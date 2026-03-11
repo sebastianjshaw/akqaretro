@@ -12,10 +12,27 @@ export async function GET(request: NextRequest) {
     const session = await auth();
     const creatorIdRaw = request.nextUrl.searchParams.get("creatorId") ?? "";
     const creatorId = clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH);
+    const previousUserIdRaw = request.nextUrl.searchParams.get("previousUserId") ?? "";
+    const previousUserId = clampLength(previousUserIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH);
 
     if (session?.user?.id) {
+      const userId = session.user.id;
+      // One-time merge: retros created with an old per-device userId get reassigned to this account (Google sub)
+      if (previousUserId && previousUserId !== userId) {
+        await prisma.retro.updateMany({
+          where: { userId: previousUserId },
+          data: { userId },
+        });
+      }
+      // Claim device-only retros (creatorId set, userId null or different) to this account
+      if (creatorId) {
+        await prisma.retro.updateMany({
+          where: { creatorId, OR: [{ userId: null }, { userId: { not: userId } }] },
+          data: { userId },
+        });
+      }
       const retros = await prisma.retro.findMany({
-        where: { userId: session.user.id },
+        where: { userId },
         orderBy: { createdAt: "desc" },
         take: LIMITS.MY_RETROS_MAX,
         select: { id: true, token: true, title: true, date: true, createdAt: true },

@@ -20,10 +20,23 @@ export function getConfig(): NextAuthConfig {
     secret,
     trustHost: true,
     debug,
-    // Do not set url: host is inferred from the request (v5). Avoids callback issues when AUTH_URL differs from request.
     providers:
       googleId && googleSecret
-        ? [Google({ clientId: googleId, clientSecret: googleSecret })]
+        ? [
+            Google({
+              clientId: googleId,
+              clientSecret: googleSecret,
+              // Use Google's stable account id (sub) so the same user has the same id on all devices.
+              profile(profile: { sub: string; name?: string; email?: string; picture?: string }) {
+                return {
+                  id: profile.sub,
+                  name: profile.name,
+                  email: profile.email,
+                  image: profile.picture,
+                };
+              },
+            }),
+          ]
         : [],
     callbacks: {
       jwt({ token, user }) {

@@ -30,8 +30,13 @@ export function HomeClient({ session }: HomeClientProps) {
   const fetchMyRetros = useCallback(async () => {
     setLoadingList(true);
     try {
-      // Always try session-based list first (API is source of truth; avoids stale session prop on mobile/cache).
-      const res = await fetch("/api/retros", {
+      const params = new URLSearchParams();
+      if (creatorId) params.set("creatorId", creatorId);
+      const previousUserId =
+        typeof window !== "undefined" ? localStorage.getItem("akqaretro_last_user_id") : null;
+      if (previousUserId) params.set("previousUserId", previousUserId);
+      const url = params.toString() ? `/api/retros?${params}` : "/api/retros";
+      const res = await fetch(url, {
         credentials: "include",
         cache: "no-store",
         headers: { Pragma: "no-cache" },
@@ -39,6 +44,10 @@ export function HomeClient({ session }: HomeClientProps) {
       if (res.ok) {
         const data = await res.json();
         setMyRetros(Array.isArray(data) ? data : []);
+        if (session?.user && typeof window !== "undefined") {
+          const id = (session.user as { id?: string }).id;
+          if (id) localStorage.setItem("akqaretro_last_user_id", id);
+        }
         return;
       }
       // 400 = no session and no creatorId; fall back to device-only list when not signed in
@@ -59,7 +68,7 @@ export function HomeClient({ session }: HomeClientProps) {
     } finally {
       setLoadingList(false);
     }
-  }, [creatorId]);
+  }, [creatorId, session]);
 
   useEffect(() => {
     fetchMyRetros();
