@@ -106,7 +106,7 @@ export function HomeClient({ session }: HomeClientProps) {
             </div>
           ) : (
             <a
-              href="/api/auth/signin?callbackUrl=/"
+              href="/api/auth/signin/google?callbackUrl=/"
               className="akqaretro-landing__signin text-sm text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"
             >
               Sign in with Google

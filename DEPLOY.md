@@ -11,10 +11,14 @@
 ## 2. Google sign-in (optional but recommended)
 
 1. In [Google Cloud Console](https://console.cloud.google.com/) create a project (or use an existing one).
-2. **APIs & Services** → **Credentials** → **Create credentials** → **OAuth client ID**. Application type: **Web application**. Authorized redirect URIs: `https://your-domain.com/api/auth/callback/google` (and for local: `http://localhost:3000/api/auth/callback/google`).
-3. Copy the **Client ID** and **Client secret**.
-4. Generate a secret for Auth.js: `npx auth secret` (or `openssl rand -base64 32`). Set as `AUTH_SECRET`.
-5. Add to Vercel and `.env`: `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`.
+2. **APIs & Services** → **Credentials** → **Create credentials** → **OAuth client ID**. Application type: **Web application**.
+3. **Authorized redirect URIs** – add **both** (exact strings, no trailing slash):
+   - Production: `https://<your-vercel-domain>/api/auth/callback/google` (e.g. `https://akqaretro.vercel.app/api/auth/callback/google`)
+   - Local: `http://localhost:3000/api/auth/callback/google`
+4. Copy the **Client ID** and **Client secret**.
+5. Generate a secret for Auth.js: `npx auth secret` (or `openssl rand -base64 32`). Set as `AUTH_SECRET`.
+6. Add to Vercel and `.env`: `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`.
+7. **Production only:** In Vercel, set **`AUTH_URL`** to your production URL (e.g. `https://akqaretro.vercel.app`). Without this, the Google callback can use the wrong URL and sign-in will just refresh the page.
 
 Without these, the app still works with anonymous “My retros” (device-only); with them, retros are tied to the signed-in Google account.
 
@@ -24,9 +28,20 @@ Without these, the app still works with anonymous “My retros” (device-only);
 2. **Environment variables** (Production, Preview, Development):
    - `DATABASE_URL` = Neon pooled connection string
    - `DIRECT_URL` = Neon direct connection string
-   - `AUTH_SECRET` = from step 2.4
-   - `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` = from step 2.3 (if using Google sign-in)
-3. Deploy. The build runs **migrations against your Neon DB** (using `DATABASE_URL` and `DIRECT_URL` from Vercel), then builds the app. No need to run migrations from your machine.
+   - `AUTH_SECRET` = from step 2.5
+   - `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` = from step 2.4 (if using Google sign-in)
+   - `AUTH_URL` = your production URL, e.g. `https://your-app.vercel.app` (required for Google sign-in to work on production)
+3. Deploy. The build runs **migrations against your Neon DB** (using `DATABASE_URL` and `DIRECT_URL` from Vercel), then builds the app.
+
+**Run migrations on production manually (optional)**  
+To apply pending migrations without deploying (e.g. from your machine):
+
+```bash
+# With production Neon URLs in .env, or inline:
+DATABASE_URL="postgresql://...pooled..." DIRECT_URL="postgresql://...direct..." npx prisma migrate deploy
+```
+
+Use the same pooled and direct connection strings you have in Vercel for production.
 
 ## 4. Local dev with Neon
 
