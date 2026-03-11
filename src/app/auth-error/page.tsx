@@ -40,6 +40,9 @@ export default async function AuthErrorPage({
             <p className="akqaretro-caption text-[var(--akqa-muted)]">
               If any are missing or wrong, fix them and trigger a new deployment.
             </p>
+            <p className="akqaretro-caption text-[var(--akqa-muted)] mt-2">
+              To see which vars Vercel has: open <a href="/api/auth/check-env" className="underline">/api/auth/check-env</a> on this site; it lists what’s set and what’s missing (no values shown).
+            </p>
           </div>
         )}
         {error === "OAuthCallback" && (
