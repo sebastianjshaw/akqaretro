@@ -44,7 +44,13 @@ You can also add **`NEXTAUTH_SECRET`** with the same value as a fallback; the ap
 
 **Check what the server sees:** After deploying, open `https://<your-vercel-domain>/api/auth/check-env`. It returns whether `secret`, `googleId`, and `googleSecret` are set at runtime (no values). If `secret` is `false`, the Production env var is not reaching the server—re-check the variable name and Production checkbox in Vercel.
 
-**If the callback still redirects to `/auth-error?error=Configuration`:** The app can show the real error when **AUTH_DEBUG** is set. In Vercel → **Settings** → **Environment Variables**, add `AUTH_DEBUG` = `1` for Production, redeploy, then try sign-in again. The error page will show **Error type** and a short **detail** (e.g. `InvalidCheck`, JWT/cookie message). Remove `AUTH_DEBUG` after fixing. Alternatively, check Vercel → **Logs** for the `/api/auth/callback/google` request and the thrown error.
+**If the callback still redirects to `/auth-error?error=Configuration`:** Set **AUTH_DEBUG** = `1` in Vercel, redeploy, try sign-in again, then check **Vercel → Logs** for the `/api/auth/callback/google` request. The log will show the real error.
+
+**If logs show `CallbackRouteError` with `invalid_client` / "Unauthorized" (provider: google):** Google is rejecting the token exchange. Fix by correcting your **Google OAuth credentials** in Vercel:
+- In [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Credentials**, use a **Web application** OAuth client (not Android/iOS).
+- Copy the **Client ID** and **Client secret** again (or create a new client secret if the old one was rotated).
+- In Vercel → **Environment Variables**, set **AUTH_GOOGLE_ID** and **AUTH_GOOGLE_SECRET** to those values exactly (no quotes, no leading/trailing spaces). Ensure both are assigned to **Production**.
+- Redeploy with **Clear cache and redeploy**. Remove **AUTH_DEBUG** after fixing.
 
 **Run migrations on production manually (optional)**  
 To apply pending migrations without deploying (e.g. from your machine):

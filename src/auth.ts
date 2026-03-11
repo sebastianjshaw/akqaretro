@@ -27,11 +27,12 @@ export function getConfig(): NextAuthConfig {
         : [],
     callbacks: {
       jwt({ token, user }) {
-        if (user) token.id = user.id;
+        if (user) (token as { id?: string }).id = user.id ?? (token as { sub?: string }).sub;
         return token;
       },
       session({ session, token }) {
-        if (session.user) (session.user as { id?: string }).id = token.id as string;
+        const id = (token as { id?: string }).id ?? (token as { sub?: string }).sub;
+        if (session.user && id) (session.user as { id?: string }).id = id as string;
         return session;
       },
     },
