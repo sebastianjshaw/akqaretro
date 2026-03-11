@@ -27,34 +27,9 @@ export default async function AuthErrorPage({
           Sign-in error
         </h1>
         <p className="akqaretro-caption text-[var(--akqa-muted)] mb-6">{message}</p>
-        {error === "Configuration" && (
-          <div className="akqaretro-auth-error__config text-left mb-6 space-y-2">
-            <p className="akqaretro-caption text-[var(--akqa-muted)]">
-              On Vercel, open the project → <strong>Settings → Environment Variables</strong> and ensure these are set for <strong>Production</strong> (and redeploy after adding or changing them):
-            </p>
-            <ul className="akqaretro-caption text-[var(--akqa-muted)] list-disc list-inside space-y-1">
-              <li><code className="text-xs">AUTH_SECRET</code> – required; e.g. run <code className="text-xs">npx auth secret</code> and paste the value</li>
-              <li><code className="text-xs">AUTH_GOOGLE_ID</code> – from Google Cloud Console → Credentials → OAuth client ID</li>
-              <li><code className="text-xs">AUTH_GOOGLE_SECRET</code> – from the same OAuth client</li>
-            </ul>
-            <p className="akqaretro-caption text-[var(--akqa-muted)]">
-              If any are missing or wrong, fix them and trigger a new deployment.
-            </p>
-            <p className="akqaretro-caption text-[var(--akqa-muted)] mt-2">
-              To see which vars Vercel has: open <a href="/api/auth/check-env" className="underline">/api/auth/check-env</a> on this site; it lists what’s set and what’s missing (no values shown).
-            </p>
-          </div>
-        )}
-        {error === "OAuthCallback" && (
-          <p className="akqaretro-caption text-[var(--akqa-muted)] mb-4 text-left">
-            In Google Cloud Console → Credentials → your OAuth client → Authorized redirect URIs, add exactly:{" "}
-            <code className="block mt-2 p-2 bg-[var(--akqa-border)] text-xs break-all">
-              https://your-production-domain.vercel.app/api/auth/callback/google
-            </code>
-            and set <code className="text-xs">AUTH_URL</code> in Vercel to{" "}
-            <code className="text-xs break-all">https://your-production-domain.vercel.app</code>.
-          </p>
-        )}
+        <p className="akqaretro-caption text-[var(--akqa-muted)] mb-6">
+          Please try again later or contact the site administrator if the problem continues.
+        </p>
         <Link
           href="/"
           className="akqaretro-auth-error__link inline-block text-sm text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"

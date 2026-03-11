@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 
 /**
  * GET /api/auth/check-env
- * Returns which auth-related env vars are set (names only). Use to debug Configuration errors on Vercel.
+ * Dev only: returns which auth env vars are set (names only). 404 in production.
  */
 export async function GET() {
+  if (process.env.NODE_ENV !== "development") {
+    return new NextResponse(null, { status: 404 });
+  }
   const vars = ["AUTH_SECRET", "AUTH_GOOGLE_ID", "AUTH_GOOGLE_SECRET"] as const;
   const present = vars.filter((name) => {
     const v = process.env[name];
@@ -15,6 +18,5 @@ export async function GET() {
     ok: missing.length === 0,
     set: present,
     missing,
-    hint: missing.length > 0 ? "Add the missing variables in Vercel → Settings → Environment Variables (Production), then redeploy." : null,
   });
 }

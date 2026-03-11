@@ -31,8 +31,9 @@ Without these, the app still works with anonymous “My retros” (device-only);
    - `PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK` = `1` (avoids P1002 timeout during `migrate deploy` on Neon; [see Prisma env vars](https://www.prisma.io/docs/orm/reference/prisma-environment-variables-reference))
    - `AUTH_SECRET` = from step 2.5
    - `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` = from step 2.4 (if using Google sign-in)
-   - `AUTH_URL` = your production URL, e.g. `https://your-app.vercel.app` (required for Google sign-in to work on production)
-3. Deploy. The build runs **migrations against your Neon DB** (using `DIRECT_URL`), then builds the app.
+   - `AUTH_URL` = your production URL, e.g. `https://akqaretro.vercel.app` (required for Google sign-in on production)
+3. **Env checklist:** For each variable, select **Production** (and Preview if you use it). Paste the **value only** (no quotes). After saving, trigger a **Redeploy**; if sign-in still fails, use **Redeploy** → **Clear cache and redeploy**.
+4. Deploy. The build runs **migrations against your Neon DB** (using `DIRECT_URL`), then builds the app.
 
 **Run migrations on production manually (optional)**  
 To apply pending migrations without deploying (e.g. from your machine):

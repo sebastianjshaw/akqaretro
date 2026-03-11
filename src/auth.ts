@@ -1,14 +1,16 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 
+const googleId = process.env.AUTH_GOOGLE_ID?.trim() ?? "";
+const googleSecret = process.env.AUTH_GOOGLE_SECRET?.trim() ?? "";
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID!,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
-    }),
-  ],
   trustHost: true,
+  ...(process.env.AUTH_URL && { url: process.env.AUTH_URL }),
+  providers:
+    googleId && googleSecret
+      ? [Google({ clientId: googleId, clientSecret: googleSecret })]
+      : [],
   callbacks: {
     jwt({ token, user }) {
       if (user) token.id = user.id;
