@@ -28,10 +28,11 @@ Without these, the app still works with anonymous “My retros” (device-only);
 2. **Environment variables** (Production, Preview, Development):
    - `DATABASE_URL` = Neon pooled connection string
    - `DIRECT_URL` = Neon direct connection string
+   - `PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK` = `1` (avoids P1002 timeout during `migrate deploy` on Neon; [see Prisma env vars](https://www.prisma.io/docs/orm/reference/prisma-environment-variables-reference))
    - `AUTH_SECRET` = from step 2.5
    - `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` = from step 2.4 (if using Google sign-in)
    - `AUTH_URL` = your production URL, e.g. `https://your-app.vercel.app` (required for Google sign-in to work on production)
-3. Deploy. The build runs **migrations against your Neon DB** (using `DATABASE_URL` and `DIRECT_URL` from Vercel), then builds the app.
+3. Deploy. The build runs **migrations against your Neon DB** (using `DIRECT_URL`), then builds the app.
 
 **Run migrations on production manually (optional)**  
 To apply pending migrations without deploying (e.g. from your machine):
@@ -42,6 +43,8 @@ DATABASE_URL="postgresql://...pooled..." DIRECT_URL="postgresql://...direct..." 
 ```
 
 Use the same pooled and direct connection strings you have in Vercel for production.
+
+**If builds still fail with P1002 (advisory lock timeout):** Remove migrations from the build and run them once from your machine. In `package.json` change the build script to `"build": "prisma generate && next build"`, then run `npx prisma migrate deploy` locally with production `DATABASE_URL`/`DIRECT_URL` whenever you add a new migration.
 
 ## 4. Local dev with Neon
 

@@ -27,6 +27,21 @@ export default async function AuthErrorPage({
           Sign-in error
         </h1>
         <p className="akqaretro-caption text-[var(--akqa-muted)] mb-6">{message}</p>
+        {error === "Configuration" && (
+          <div className="akqaretro-auth-error__config text-left mb-6 space-y-2">
+            <p className="akqaretro-caption text-[var(--akqa-muted)]">
+              On Vercel, open the project → <strong>Settings → Environment Variables</strong> and ensure these are set for <strong>Production</strong> (and redeploy after adding or changing them):
+            </p>
+            <ul className="akqaretro-caption text-[var(--akqa-muted)] list-disc list-inside space-y-1">
+              <li><code className="text-xs">AUTH_SECRET</code> – required; e.g. run <code className="text-xs">npx auth secret</code> and paste the value</li>
+              <li><code className="text-xs">AUTH_GOOGLE_ID</code> – from Google Cloud Console → Credentials → OAuth client ID</li>
+              <li><code className="text-xs">AUTH_GOOGLE_SECRET</code> – from the same OAuth client</li>
+            </ul>
+            <p className="akqaretro-caption text-[var(--akqa-muted)]">
+              If any are missing or wrong, fix them and trigger a new deployment.
+            </p>
+          </div>
+        )}
         {error === "OAuthCallback" && (
           <p className="akqaretro-caption text-[var(--akqa-muted)] mb-4 text-left">
             In Google Cloud Console → Credentials → your OAuth client → Authorized redirect URIs, add exactly:{" "}
