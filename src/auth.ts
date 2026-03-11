@@ -5,8 +5,9 @@ import type { NextAuthConfig } from "next-auth";
 /**
  * Lazy config: built at request time so process.env is read in the same
  * runtime as the API route (avoids Configuration error when env differs at build vs runtime, e.g. Vercel).
+ * Exported for /api/auth/assert-debug to diagnose Configuration errors.
  */
-function getConfig(): NextAuthConfig {
+export function getConfig(): NextAuthConfig {
   const secret =
     (process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET)?.trim() || undefined;
   const googleId = process.env.AUTH_GOOGLE_ID?.trim() ?? "";
