@@ -8,15 +8,27 @@
 4. **Direct (for `DIRECT_URL`):** Turn **Connection pooling** **off** in the same modal. Copy the new connection string → use as `DIRECT_URL`.  
    (Direct = hostname without `-pooler`; Prisma needs this for migrations.)
 
-## 2. Vercel
+## 2. Google sign-in (optional but recommended)
+
+1. In [Google Cloud Console](https://console.cloud.google.com/) create a project (or use an existing one).
+2. **APIs & Services** → **Credentials** → **Create credentials** → **OAuth client ID**. Application type: **Web application**. Authorized redirect URIs: `https://your-domain.com/api/auth/callback/google` (and for local: `http://localhost:3000/api/auth/callback/google`).
+3. Copy the **Client ID** and **Client secret**.
+4. Generate a secret for Auth.js: `npx auth secret` (or `openssl rand -base64 32`). Set as `AUTH_SECRET`.
+5. Add to Vercel and `.env`: `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`.
+
+Without these, the app still works with anonymous “My retros” (device-only); with them, retros are tied to the signed-in Google account.
+
+## 3. Vercel
 
 1. Import the repo in [Vercel](https://vercel.com).
 2. **Environment variables** (Production, Preview, Development):
    - `DATABASE_URL` = Neon pooled connection string
    - `DIRECT_URL` = Neon direct connection string
+   - `AUTH_SECRET` = from step 2.4
+   - `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` = from step 2.3 (if using Google sign-in)
 3. Deploy. The build runs **migrations against your Neon DB** (using `DATABASE_URL` and `DIRECT_URL` from Vercel), then builds the app. No need to run migrations from your machine.
 
-## 3. Local dev with Neon
+## 4. Local dev with Neon
 
 In `.env`:
 

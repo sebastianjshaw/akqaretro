@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { generateRetroToken } from "@/lib/token";
 import { LIMITS, clampLength } from "@/lib/validation";
@@ -6,10 +7,30 @@ import { safeParseJson } from "@/lib/safeJson";
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await auth();
     const creatorIdRaw = request.nextUrl.searchParams.get("creatorId") ?? "";
     const creatorId = clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH);
+
+    if (session?.user?.id) {
+      const retros = await prisma.retro.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        take: LIMITS.MY_RETROS_MAX,
+        select: { id: true, token: true, title: true, date: true, createdAt: true },
+      });
+      return NextResponse.json(
+        retros.map((r) => ({
+          id: r.id,
+          token: r.token,
+          title: r.title,
+          date: r.date,
+          createdAt: r.createdAt.toISOString(),
+        }))
+      );
+    }
+
     if (!creatorId) {
-      return NextResponse.json({ error: "creatorId is required" }, { status: 400 });
+      return NextResponse.json({ error: "creatorId is required when not signed in" }, { status: 400 });
     }
     const retros = await prisma.retro.findMany({
       where: { creatorId },
@@ -34,6 +55,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
     const body = await safeParseJson<{ title?: string; date?: string; creatorId?: string }>(request);
     if (!body) {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
@@ -47,7 +69,13 @@ export async function POST(request: NextRequest) {
     }
     const token = generateRetroToken();
     const retro = await prisma.retro.create({
-      data: { token, title, date, ...(creatorId && { creatorId }) },
+      data: {
+        token,
+        title,
+        date,
+        ...(session?.user?.id && { userId: session.user.id }),
+        ...(creatorId && { creatorId }),
+      },
     });
     return NextResponse.json({
       token: retro.token,
