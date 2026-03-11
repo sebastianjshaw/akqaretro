@@ -16,7 +16,7 @@ export function getConfig(): NextAuthConfig {
   return {
     secret,
     trustHost: true,
-    ...(process.env.AUTH_URL && { url: process.env.AUTH_URL }),
+    // Do not set url: host is inferred from the request (v5). Avoids callback issues when AUTH_URL differs from request.
     providers:
       googleId && googleSecret
         ? [Google({ clientId: googleId, clientSecret: googleSecret })]

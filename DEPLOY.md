@@ -18,7 +18,7 @@
 4. Copy the **Client ID** and **Client secret**.
 5. Generate a secret for Auth.js: `npx auth secret` (or `openssl rand -base64 32`). Set as `AUTH_SECRET`.
 6. Add to Vercel and `.env`: `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`.
-7. **Production only:** In Vercel, set **`AUTH_URL`** to your production URL (e.g. `https://akqaretro.vercel.app`). Without this, the Google callback can use the wrong URL and sign-in will just refresh the page.
+7. **Optional:** The app infers the host from the request; you do **not** need to set `AUTH_URL` for production. Only set it if you use a custom domain or need a fixed base URL.
 
 Without these, the app still works with anonymous “My retros” (device-only); with them, retros are tied to the signed-in Google account.
 
@@ -31,7 +31,7 @@ Without these, the app still works with anonymous “My retros” (device-only);
    - `PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK` = `1` (avoids P1002 timeout during `migrate deploy` on Neon; [see Prisma env vars](https://www.prisma.io/docs/orm/reference/prisma-environment-variables-reference))
    - `AUTH_SECRET` = from step 2.5
    - `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` = from step 2.4 (if using Google sign-in)
-   - `AUTH_URL` = your production URL, e.g. `https://akqaretro.vercel.app` (required for Google sign-in on production)
+   - `AUTH_URL` = optional; only if you need a custom base URL (e.g. proxy). Leave unset for normal production.
 3. **Env checklist:** For each variable, select **Production** (and Preview if you use it). Paste the **value only** (no quotes). After saving, trigger a **Redeploy**; if sign-in still fails, use **Redeploy** → **Clear cache and redeploy**.
 4. Deploy. The build runs **migrations against your Neon DB** (using `DIRECT_URL`), then builds the app.
 
@@ -43,6 +43,8 @@ Without these, the app still works with anonymous “My retros” (device-only);
 You can also add **`NEXTAUTH_SECRET`** with the same value as a fallback; the app reads either.
 
 **Check what the server sees:** After deploying, open `https://<your-vercel-domain>/api/auth/check-env`. It returns whether `secret`, `googleId`, and `googleSecret` are set at runtime (no values). If `secret` is `false`, the Production env var is not reaching the server—re-check the variable name and Production checkbox in Vercel.
+
+**If the callback still redirects to `/auth-error?error=Configuration`:** Auth.js hides the real error as "Configuration". In Vercel → your project → **Logs** (or **Deployments** → latest → **Functions**), find the log entry for the request to `/api/auth/callback/google` and look for the thrown error (e.g. `InvalidCheck`, JWT decode failure). That message will point to the fix (usually wrong/missing `AUTH_SECRET` or cookie handling).
 
 **Run migrations on production manually (optional)**  
 To apply pending migrations without deploying (e.g. from your machine):
