@@ -25,6 +25,7 @@ export function HomeClient({ session }: HomeClientProps) {
   const [error, setError] = useState("");
   const [myRetros, setMyRetros] = useState<RetroSummary[]>([]);
   const [loadingList, setLoadingList] = useState(true);
+  const [deletingToken, setDeletingToken] = useState<string | null>(null);
   const creatorId = getVoterId();
 
   const fetchMyRetros = useCallback(async () => {
@@ -92,6 +93,34 @@ export function HomeClient({ session }: HomeClientProps) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDeleteRetro(e: React.MouseEvent, retro: RetroSummary) {
+    e.preventDefault();
+    e.stopPropagation();
+    const confirmed = window.confirm(
+      `Delete “${retro.title}”? This cannot be undone.`
+    );
+    if (!confirmed) return;
+    setDeletingToken(retro.token);
+    try {
+      const url = new URL(`/api/retros/${retro.token}`, window.location.origin);
+      if (creatorId && !session) url.searchParams.set("creatorId", creatorId);
+      const res = await fetch(url.toString(), {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.status === 204) {
+        setMyRetros((prev) => prev.filter((r) => r.token !== retro.token));
+      } else {
+        const data = await res.json().catch(() => ({}));
+        window.alert(data.error ?? "Could not delete retro.");
+      }
+    } catch {
+      window.alert("Could not delete retro.");
+    } finally {
+      setDeletingToken(null);
     }
   }
 
@@ -210,14 +239,23 @@ export function HomeClient({ session }: HomeClientProps) {
           ) : (
             <ul className="akqaretro-landing__my-retros-list flex flex-col gap-2 list-none p-0 m-0">
               {myRetros.map((retro) => (
-                <li key={retro.id} className="akqaretro-landing__my-retros-item">
+                <li key={retro.id} className="akqaretro-landing__my-retros-item flex items-center gap-2 py-2 border-b border-[var(--akqa-border)] last:border-0">
                   <a
                     href={`/r/${retro.token}`}
-                    className="akqaretro-landing__my-retros-link flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 py-2 px-0 border-b border-[var(--akqa-border)] last:border-0 text-[var(--foreground)] no-underline hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"
+                    className="akqaretro-landing__my-retros-link flex flex-1 flex-col sm:flex-row sm:items-center sm:justify-between gap-1 px-0 min-w-0 text-[var(--foreground)] no-underline hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"
                   >
-                    <span className="font-medium">{retro.title}</span>
-                    <span className="akqaretro-caption text-[var(--akqa-muted)]">{formatDate(retro.date)}</span>
+                    <span className="font-medium truncate">{retro.title}</span>
+                    <span className="akqaretro-caption text-[var(--akqa-muted)] shrink-0">{formatDate(retro.date)}</span>
                   </a>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteRetro(e, retro)}
+                    disabled={deletingToken === retro.token}
+                    aria-label={`Delete ${retro.title}`}
+                    className="akqaretro-landing__my-retros-delete shrink-0 text-sm text-[var(--akqa-muted)] hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] px-2 py-1 rounded border-0 bg-transparent cursor-pointer"
+                  >
+                    {deletingToken === retro.token ? "…" : "Delete"}
+                  </button>
                 </li>
               ))}
             </ul>
