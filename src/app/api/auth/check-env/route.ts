@@ -2,21 +2,25 @@ import { NextResponse } from "next/server";
 
 /**
  * GET /api/auth/check-env
- * Dev only: returns which auth env vars are set (names only). 404 in production.
+ * Returns whether auth-related env vars are present at runtime (values never exposed).
+ * Use in production to confirm Vercel is injecting AUTH_SECRET etc.
  */
 export async function GET() {
-  if (process.env.NODE_ENV !== "development") {
-    return new NextResponse(null, { status: 404 });
-  }
-  const vars = ["AUTH_SECRET", "AUTH_GOOGLE_ID", "AUTH_GOOGLE_SECRET"] as const;
-  const present = vars.filter((name) => {
-    const v = process.env[name];
-    return typeof v === "string" && v.trim().length > 0;
-  });
-  const missing = vars.filter((n) => !present.includes(n));
+  const secret =
+    (typeof process.env.AUTH_SECRET === "string" && process.env.AUTH_SECRET.trim().length > 0) ||
+    (typeof process.env.NEXTAUTH_SECRET === "string" && process.env.NEXTAUTH_SECRET.trim().length > 0);
+  const googleId =
+    typeof process.env.AUTH_GOOGLE_ID === "string" && process.env.AUTH_GOOGLE_ID.trim().length > 0;
+  const googleSecret =
+    typeof process.env.AUTH_GOOGLE_SECRET === "string" &&
+    process.env.AUTH_GOOGLE_SECRET.trim().length > 0;
+
   return NextResponse.json({
-    ok: missing.length === 0,
-    set: present,
-    missing,
+    secret,
+    googleId,
+    googleSecret,
+    hint: !secret
+      ? "AUTH_SECRET or NEXTAUTH_SECRET must be set for Production in Vercel (exact names, no spaces)."
+      : undefined,
   });
 }

@@ -3,8 +3,11 @@ import Google from "next-auth/providers/google";
 
 const googleId = process.env.AUTH_GOOGLE_ID?.trim() ?? "";
 const googleSecret = process.env.AUTH_GOOGLE_SECRET?.trim() ?? "";
+const secret =
+  (process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || process.env.BETTER_AUTH_SECRET || process.env.NEXTAUTH_AUTH_SECRET)?.trim() || undefined;
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: secret || undefined,
   trustHost: true,
   ...(process.env.AUTH_URL && { url: process.env.AUTH_URL }),
   providers:

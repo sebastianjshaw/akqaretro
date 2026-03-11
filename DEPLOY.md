@@ -35,6 +35,15 @@ Without these, the app still works with anonymous “My retros” (device-only);
 3. **Env checklist:** For each variable, select **Production** (and Preview if you use it). Paste the **value only** (no quotes). After saving, trigger a **Redeploy**; if sign-in still fails, use **Redeploy** → **Clear cache and redeploy**.
 4. Deploy. The build runs **migrations against your Neon DB** (using `DIRECT_URL`), then builds the app.
 
+**If sign-in redirects to `/auth-error?error=Configuration`:** The auth runtime is not seeing `AUTH_SECRET`. In Vercel → **Settings** → **Environment Variables** confirm:
+- A variable named **exactly** **`AUTH_SECRET`** or **`NEXTAUTH_SECRET`** (no space before/after the name; not `BETTER_AUTH_SECRET` or `NEXTAUTH_AUTH_SECRET`).
+- It is assigned to **Production** (checkbox checked).
+- The **value is not empty**: use the output of `npx auth secret` (or `openssl rand -base64 32`). No surrounding quotes, no leading/trailing spaces.
+- After any change, use **Redeploy** → **Clear cache and redeploy**.  
+You can also add **`NEXTAUTH_SECRET`** with the same value as a fallback; the app reads either.
+
+**Check what the server sees:** After deploying, open `https://<your-vercel-domain>/api/auth/check-env`. It returns whether `secret`, `googleId`, and `googleSecret` are set at runtime (no values). If `secret` is `false`, the Production env var is not reaching the server—re-check the variable name and Production checkbox in Vercel.
+
 **Run migrations on production manually (optional)**  
 To apply pending migrations without deploying (e.g. from your machine):
 
