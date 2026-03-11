@@ -1,8 +1,9 @@
+import type { NextRequest } from "next/server";
 import { handlers } from "@/auth";
 
 const AUTH_DEBUG = process.env.AUTH_DEBUG === "1" || process.env.AUTH_DEBUG === "true";
 
-async function wrappedGET(req: Request) {
+async function wrappedGET(req: NextRequest) {
   try {
     return await handlers.GET(req);
   } catch (e) {
