@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const creatorIdRaw = request.nextUrl.searchParams.get("creatorId") ?? "";
     const creatorId = clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH);
     const previousUserIdRaw = request.nextUrl.searchParams.get("previousUserId") ?? "";
-    const previousUserId = clampLength(previousUserIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH);
+    const previousUserId = clampLength(previousUserIdRaw, LIMITS.USER_ID_MAX_LENGTH);
 
     if (session?.user?.id) {
       const userId = session.user.id;

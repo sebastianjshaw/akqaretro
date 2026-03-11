@@ -26,10 +26,11 @@ export function getConfig(): NextAuthConfig {
             Google({
               clientId: googleId,
               clientSecret: googleSecret,
-              // Use Google's stable account id (sub) so the same user has the same id on all devices.
-              profile(profile: { sub: string; name?: string; email?: string; picture?: string }) {
+              // Use email as the stable user id: same account = same id on all devices (no per-device random id).
+              profile(profile: { sub?: string; name?: string; email?: string; picture?: string }) {
+                const email = profile.email?.trim().toLowerCase() || "";
                 return {
-                  id: profile.sub,
+                  id: email || profile.sub || "",
                   name: profile.name,
                   email: profile.email,
                   image: profile.picture,
@@ -40,14 +41,16 @@ export function getConfig(): NextAuthConfig {
         : [],
     callbacks: {
       jwt({ token, user }) {
-        const t = token as { id?: string; sub?: string };
-        const stableId = user?.id ?? t.id ?? t.sub;
+        const t = token as { id?: string; sub?: string; email?: string };
+        const u = user as { id?: string; email?: string } | undefined;
+        const stableId =
+          (u?.email?.trim().toLowerCase()) ?? u?.id ?? t.id ?? t.email ?? t.sub;
         if (stableId) t.id = typeof stableId === "string" ? stableId : String(stableId);
         return token;
       },
       session({ session, token }) {
-        const t = token as { id?: string; sub?: string };
-        const id = t.id ?? t.sub;
+        const t = token as { id?: string; sub?: string; email?: string };
+        const id = t.id ?? t.email ?? t.sub;
         if (session.user && id) (session.user as { id?: string }).id = typeof id === "string" ? id : String(id);
         return session;
       },
