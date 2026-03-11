@@ -1,17 +1,12 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-
-function CheckIcon() {
-  return <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden><path strokeLinecap="square" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>;
-}
-function XIcon() {
-  return <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden><path strokeLinecap="square" strokeWidth={2.5} d="M6 6l12 12M6 18L18 6" /></svg>;
-}
+import type { ColumnType } from "@/types/retro";
+import { CheckIcon, XIcon } from "./icons";
 
 interface RetroDraftCardProps {
   token: string;
-  column: string;
+  column: ColumnType;
   onSaved: () => void;
   onCancel: () => void;
 }
