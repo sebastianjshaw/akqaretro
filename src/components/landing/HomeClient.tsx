@@ -76,29 +76,9 @@ export function HomeClient({ session }: HomeClientProps) {
     }
   }
 
-  /** POST to auth API so the response (redirect + Set-Cookie) comes from the API route. Server actions + redirect() can omit cookies. */
-  async function handleSignInWithGoogle() {
-    try {
-      const csrfRes = await fetch("/api/auth/csrf", { credentials: "include" });
-      const { csrfToken } = (await csrfRes.json()) as { csrfToken?: string };
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = "/api/auth/signin/google";
-      const csrfInput = document.createElement("input");
-      csrfInput.type = "hidden";
-      csrfInput.name = "csrfToken";
-      csrfInput.value = csrfToken ?? "";
-      form.appendChild(csrfInput);
-      const callbackInput = document.createElement("input");
-      callbackInput.type = "hidden";
-      callbackInput.name = "callbackUrl";
-      callbackInput.value = "/";
-      form.appendChild(callbackInput);
-      document.body.appendChild(form);
-      form.submit();
-    } catch {
-      setError("Could not start sign-in");
-    }
+  /** Use GET start-google so the redirect to Google is returned by a Route Handler with Set-Cookie (reliable cookie delivery). */
+  function handleSignInWithGoogle() {
+    window.location.href = "/api/auth/start-google?callbackUrl=/";
   }
 
   function formatDate(iso: string) {
