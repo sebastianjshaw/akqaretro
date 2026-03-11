@@ -4,7 +4,6 @@ import type { Session } from "next-auth";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getVoterId } from "@/lib/voterId";
-import { signInWithGoogle } from "@/app/actions";
 
 interface RetroSummary {
   id: string;
@@ -77,6 +76,31 @@ export function HomeClient({ session }: HomeClientProps) {
     }
   }
 
+  /** POST to auth API so the response (redirect + Set-Cookie) comes from the API route. Server actions + redirect() can omit cookies. */
+  async function handleSignInWithGoogle() {
+    try {
+      const csrfRes = await fetch("/api/auth/csrf", { credentials: "include" });
+      const { csrfToken } = (await csrfRes.json()) as { csrfToken?: string };
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/api/auth/signin/google";
+      const csrfInput = document.createElement("input");
+      csrfInput.type = "hidden";
+      csrfInput.name = "csrfToken";
+      csrfInput.value = csrfToken ?? "";
+      form.appendChild(csrfInput);
+      const callbackInput = document.createElement("input");
+      callbackInput.type = "hidden";
+      callbackInput.name = "callbackUrl";
+      callbackInput.value = "/";
+      form.appendChild(callbackInput);
+      document.body.appendChild(form);
+      form.submit();
+    } catch {
+      setError("Could not start sign-in");
+    }
+  }
+
   function formatDate(iso: string) {
     try {
       return new Date(iso).toLocaleDateString(undefined, {
@@ -106,14 +130,13 @@ export function HomeClient({ session }: HomeClientProps) {
               </a>
             </div>
           ) : (
-            <form action={signInWithGoogle} className="akqaretro-landing__signin-form inline">
-              <button
-                type="submit"
-                className="akqaretro-landing__signin text-sm text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] bg-transparent border-none cursor-pointer p-0 font-inherit"
-              >
-                Sign in with Google
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={handleSignInWithGoogle}
+              className="akqaretro-landing__signin text-sm text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] bg-transparent border-none cursor-pointer p-0 font-inherit"
+            >
+              Sign in with Google
+            </button>
           )}
         </div>
 
