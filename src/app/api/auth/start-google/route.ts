@@ -55,7 +55,12 @@ export async function GET(request: Request) {
     );
   }
 
-  const response = NextResponse.redirect(redirectUrl, { status: 302 });
+  // 200 + Set-Cookie then redirect via HTML so browsers persist cookies (some drop cookies on 302+Location).
+  const html = `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${redirectUrl.replace(/"/g, "&quot;")}"/><script>window.location.replace(${JSON.stringify(redirectUrl)})</script></head><body>Redirecting to sign in...</body></html>`;
+  const response = new NextResponse(html, {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
 
   // Copy cookies: from raw internal response, or from Response headers (when raw didn’t match)
   const cookies = internal.cookies;
