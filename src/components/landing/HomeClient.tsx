@@ -4,6 +4,7 @@ import type { Session } from "next-auth";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getVoterId } from "@/lib/voterId";
+import { signInWithGoogle } from "@/app/actions";
 
 interface RetroSummary {
   id: string;
@@ -105,12 +106,14 @@ export function HomeClient({ session }: HomeClientProps) {
               </a>
             </div>
           ) : (
-            <a
-              href="/api/auth/signin/google?callbackUrl=/"
-              className="akqaretro-landing__signin text-sm text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"
-            >
-              Sign in with Google
-            </a>
+            <form action={signInWithGoogle} className="akqaretro-landing__signin-form inline">
+              <button
+                type="submit"
+                className="akqaretro-landing__signin text-sm text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] bg-transparent border-none cursor-pointer p-0 font-inherit"
+              >
+                Sign in with Google
+              </button>
+            </form>
           )}
         </div>
 
