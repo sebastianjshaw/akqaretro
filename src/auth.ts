@@ -27,12 +27,15 @@ export function getConfig(): NextAuthConfig {
         : [],
     callbacks: {
       jwt({ token, user }) {
-        if (user) (token as { id?: string }).id = user.id ?? (token as { sub?: string }).sub;
+        const t = token as { id?: string; sub?: string };
+        const stableId = user?.id ?? t.id ?? t.sub;
+        if (stableId) t.id = typeof stableId === "string" ? stableId : String(stableId);
         return token;
       },
       session({ session, token }) {
-        const id = (token as { id?: string }).id ?? (token as { sub?: string }).sub;
-        if (session.user && id) (session.user as { id?: string }).id = id as string;
+        const t = token as { id?: string; sub?: string };
+        const id = t.id ?? t.sub;
+        if (session.user && id) (session.user as { id?: string }).id = typeof id === "string" ? id : String(id);
         return session;
       },
     },
