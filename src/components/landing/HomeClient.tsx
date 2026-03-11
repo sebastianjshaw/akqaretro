@@ -30,26 +30,36 @@ export function HomeClient({ session }: HomeClientProps) {
   const fetchMyRetros = useCallback(async () => {
     setLoadingList(true);
     try {
-      const url = session
-        ? "/api/retros"
-        : `/api/retros?creatorId=${encodeURIComponent(creatorId)}`;
-      if (!session && !creatorId) {
-        setLoadingList(false);
-        return;
-      }
-      const res = await fetch(url, { credentials: "include" });
+      // Always try session-based list first (API is source of truth; avoids stale session prop on mobile/cache).
+      const res = await fetch("/api/retros", {
+        credentials: "include",
+        cache: "no-store",
+        headers: { Pragma: "no-cache" },
+      });
       if (res.ok) {
         const data = await res.json();
-        setMyRetros(data);
-      } else {
-        setMyRetros([]);
+        setMyRetros(Array.isArray(data) ? data : []);
+        return;
       }
+      // 400 = no session and no creatorId; fall back to device-only list when not signed in
+      if (res.status === 400 && creatorId) {
+        const resDevice = await fetch(
+          `/api/retros?creatorId=${encodeURIComponent(creatorId)}`,
+          { credentials: "include", cache: "no-store" }
+        );
+        if (resDevice.ok) {
+          const data = await resDevice.json();
+          setMyRetros(Array.isArray(data) ? data : []);
+          return;
+        }
+      }
+      setMyRetros([]);
     } catch {
       setMyRetros([]);
     } finally {
       setLoadingList(false);
     }
-  }, [session, creatorId]);
+  }, [creatorId]);
 
   useEffect(() => {
     fetchMyRetros();
@@ -168,9 +178,20 @@ export function HomeClient({ session }: HomeClientProps) {
         </section>
 
         <section className="akqaretro-landing__my-retros border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] p-6" aria-labelledby="akqaretro-my-retros-heading">
-          <h2 id="akqaretro-my-retros-heading" className="akqaretro-landing__my-retros-title akqaretro-headline text-lg font-normal text-[var(--foreground)] mb-3 tracking-wide">
-            My retros
-          </h2>
+          <div className="akqaretro-landing__my-retros-header flex items-center justify-between gap-2 mb-3">
+            <h2 id="akqaretro-my-retros-heading" className="akqaretro-landing__my-retros-title akqaretro-headline text-lg font-normal text-[var(--foreground)] tracking-wide">
+              My retros
+            </h2>
+            <button
+              type="button"
+              onClick={() => fetchMyRetros()}
+              disabled={loadingList}
+              aria-label="Refresh list"
+              className="akqaretro-landing__my-retros-refresh text-sm text-[var(--akqa-muted)] hover:text-[var(--foreground)] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] px-2 py-1 rounded border-0 bg-transparent cursor-pointer"
+            >
+              {loadingList ? "…" : "Refresh"}
+            </button>
+          </div>
           {loadingList ? (
             <p className="akqaretro-landing__my-retros-loading akqaretro-caption text-[var(--akqa-muted)]">Loading…</p>
           ) : myRetros.length === 0 ? (

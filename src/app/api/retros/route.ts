@@ -20,15 +20,18 @@ export async function GET(request: NextRequest) {
         take: LIMITS.MY_RETROS_MAX,
         select: { id: true, token: true, title: true, date: true, createdAt: true },
       });
-      return NextResponse.json(
-        retros.map((r) => ({
-          id: r.id,
-          token: r.token,
-          title: r.title,
-          date: r.date,
-          createdAt: r.createdAt.toISOString(),
-        }))
-      );
+      const body = retros.map((r) => ({
+        id: r.id,
+        token: r.token,
+        title: r.title,
+        date: r.date,
+        createdAt: r.createdAt.toISOString(),
+      }));
+      return NextResponse.json(body, {
+        headers: {
+          "Cache-Control": "private, no-store, max-age=0",
+        },
+      });
     }
 
     if (!creatorId) {
@@ -47,7 +50,10 @@ export async function GET(request: NextRequest) {
         title: r.title,
         date: r.date,
         createdAt: r.createdAt.toISOString(),
-      }))
+      })),
+      {
+        headers: { "Cache-Control": "private, no-store, max-age=0" },
+      }
     );
   } catch (e) {
     console.error("GET /api/retros", e);
