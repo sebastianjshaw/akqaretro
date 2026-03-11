@@ -35,15 +35,19 @@ export async function GET(request: Request) {
     body: body.toString(),
   });
 
+  // Auth() is called directly so setEnvDefaults never runs; basePath must match the URL path.
   const res = await Auth(req, {
     ...config,
+    basePath: "/api/auth",
     raw,
     skipCSRFCheck,
   });
 
-  // Auth() with raw returns ResponseInternal { redirect, cookies }, not Response
+  // Auth() with raw returns ResponseInternal { redirect, cookies }; if assertConfig fails it returns Response
   const internal = res as { redirect?: string; cookies?: CookieFromAuth[] };
-  const redirectUrl = internal.redirect;
+  const redirectUrl =
+    internal.redirect ??
+    (res instanceof Response ? res.headers.get("Location") : null);
   if (!redirectUrl) {
     return NextResponse.json(
       { error: "No redirect URL from auth" },
@@ -52,6 +56,8 @@ export async function GET(request: Request) {
   }
 
   const response = NextResponse.redirect(redirectUrl, { status: 302 });
+
+  // Copy cookies: from raw internal response, or from Response headers (when raw didn’t match)
   const cookies = internal.cookies;
   if (Array.isArray(cookies)) {
     for (const c of cookies) {
@@ -64,6 +70,11 @@ export async function GET(request: Request) {
         sameSite: (opt.sameSite as "lax" | "strict" | "none") ?? "lax",
         path: opt.path ?? "/",
       });
+    }
+  } else if (res instanceof Response) {
+    const setCookies = res.headers.getSetCookie?.() ?? [];
+    for (const cookie of setCookies) {
+      response.headers.append("Set-Cookie", cookie);
     }
   }
   return response;
