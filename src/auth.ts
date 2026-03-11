@@ -13,9 +13,13 @@ export function getConfig(): NextAuthConfig {
   const googleId = process.env.AUTH_GOOGLE_ID?.trim() ?? "";
   const googleSecret = process.env.AUTH_GOOGLE_SECRET?.trim() ?? "";
 
+  const debug =
+    process.env.AUTH_DEBUG === "1" || process.env.AUTH_DEBUG === "true";
+
   return {
     secret,
     trustHost: true,
+    debug,
     // Do not set url: host is inferred from the request (v5). Avoids callback issues when AUTH_URL differs from request.
     providers:
       googleId && googleSecret

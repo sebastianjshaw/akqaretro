@@ -27,6 +27,11 @@ export default async function AuthErrorPage({
           Sign-in error
         </h1>
         <p className="akqaretro-caption text-[var(--akqa-muted)] mb-6">{message}</p>
+        {error === "Configuration" && (
+          <p className="akqaretro-auth-error__hint text-xs text-[var(--akqa-muted)] mb-4 max-w-sm">
+            To see the real error: in Vercel set env var <code className="akqaretro-auth-error__code font-mono bg-[var(--background)] px-1 rounded">AUTH_DEBUG=1</code>, redeploy, try sign-in again, then open <strong>Vercel → Logs</strong> and find the request to <code className="akqaretro-auth-error__code font-mono bg-[var(--background)] px-1 rounded">/api/auth/callback/google</code>. Remove AUTH_DEBUG after fixing.
+          </p>
+        )}
         {(code || detail) && (
           <p className="akqaretro-auth-error__debug text-left text-xs font-mono text-[var(--akqa-muted)] mb-6 p-3 bg-[var(--background)] rounded break-all">
             {code && <span className="block font-semibold">Error type: {code}</span>}
