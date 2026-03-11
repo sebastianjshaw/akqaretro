@@ -44,7 +44,7 @@ You can also add **`NEXTAUTH_SECRET`** with the same value as a fallback; the ap
 
 **Check what the server sees:** After deploying, open `https://<your-vercel-domain>/api/auth/check-env`. It returns whether `secret`, `googleId`, and `googleSecret` are set at runtime (no values). If `secret` is `false`, the Production env var is not reaching the server—re-check the variable name and Production checkbox in Vercel.
 
-**If the callback still redirects to `/auth-error?error=Configuration`:** Auth.js hides the real error as "Configuration". In Vercel → your project → **Logs** (or **Deployments** → latest → **Functions**), find the log entry for the request to `/api/auth/callback/google` and look for the thrown error (e.g. `InvalidCheck`, JWT decode failure). That message will point to the fix (usually wrong/missing `AUTH_SECRET` or cookie handling).
+**If the callback still redirects to `/auth-error?error=Configuration`:** The app can show the real error when **AUTH_DEBUG** is set. In Vercel → **Settings** → **Environment Variables**, add `AUTH_DEBUG` = `1` for Production, redeploy, then try sign-in again. The error page will show **Error type** and a short **detail** (e.g. `InvalidCheck`, JWT/cookie message). Remove `AUTH_DEBUG` after fixing. Alternatively, check Vercel → **Logs** for the `/api/auth/callback/google` request and the thrown error.
 
 **Run migrations on production manually (optional)**  
 To apply pending migrations without deploying (e.g. from your machine):

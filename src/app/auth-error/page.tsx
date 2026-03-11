@@ -15,9 +15,9 @@ const ERROR_MESSAGES: Record<string, string> = {
 export default async function AuthErrorPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; code?: string; detail?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, code, detail } = await searchParams;
   const message = error ? ERROR_MESSAGES[error] ?? ERROR_MESSAGES.Default : ERROR_MESSAGES.Default;
 
   return (
@@ -27,6 +27,12 @@ export default async function AuthErrorPage({
           Sign-in error
         </h1>
         <p className="akqaretro-caption text-[var(--akqa-muted)] mb-6">{message}</p>
+        {(code || detail) && (
+          <p className="akqaretro-auth-error__debug text-left text-xs font-mono text-[var(--akqa-muted)] mb-6 p-3 bg-[var(--background)] rounded break-all">
+            {code && <span className="block font-semibold">Error type: {code}</span>}
+            {detail && <span className="block mt-1">{detail}</span>}
+          </p>
+        )}
         <p className="akqaretro-caption text-[var(--akqa-muted)] mb-6">
           Please try again later or contact the site administrator if the problem continues.
         </p>
