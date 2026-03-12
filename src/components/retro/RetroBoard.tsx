@@ -252,16 +252,14 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
           >
             Add column
           </button>
-          {!data.voteCountsHidden && (
-            <div className="akqaretro-board__votes flex items-center gap-2 border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] px-4 py-2 akqaretro-caption" role="status" aria-live="polite">
-              <span className="akqaretro-board__votes-label text-[var(--akqa-muted)]">
-                Your votes:
-              </span>
-              <span className="akqaretro-board__votes-remaining text-[var(--foreground)]">
-                {data.votesRemaining} / {data.votesPerUserCap} left
-              </span>
-            </div>
-          )}
+          <div className="akqaretro-board__votes flex items-center gap-2 border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] px-4 py-2 akqaretro-caption" role="status" aria-live="polite">
+            <span className="akqaretro-board__votes-label text-[var(--akqa-muted)]">
+              Your votes:
+            </span>
+            <span className="akqaretro-board__votes-remaining text-[var(--foreground)]">
+              {data.votesRemaining} / {data.votesPerUserCap} left
+            </span>
+          </div>
         </div>
       </header>
       <div className="akqaretro-board__columns grid grid-cols-1 md:grid-cols-3 gap-6 min-w-0" style={{ gridTemplateColumns: `repeat(${columnConfig.length}, minmax(0, 1fr))` }}>

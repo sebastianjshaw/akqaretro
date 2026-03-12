@@ -64,13 +64,13 @@ export async function GET(
         updatedAt: c.updatedAt.toISOString(),
         voteCount: hideVoteCounts ? 0 : voteCount,
         userVoted: userVotesOnCard > 0,
-        userVotesOnCard: hideVoteCounts ? 0 : userVotesOnCard,
+        userVotesOnCard, // real value so +/- buttons work when counts are hidden
       };
     });
     const userVoteCount = voterId
       ? cardsRaw.reduce((sum, c) => sum + c.votes.filter((v) => v.voterId === voterId).length, 0)
       : 0;
-    const votesRemaining = hideVoteCounts ? 0 : Math.max(0, VOTES_PER_USER - userVoteCount);
+    const votesRemaining = Math.max(0, VOTES_PER_USER - userVoteCount);
     const rawConfig =
       normalizeColumnConfig((retro as { columnConfig?: unknown }).columnConfig) ??
       getDefaultColumnConfig();
@@ -87,7 +87,7 @@ export async function GET(
       isOwner,
       hideCardsFromNonOwners,
       voteCountsHidden: hideVoteCounts,
-      userVoteCount: hideVoteCounts ? 0 : userVoteCount,
+      userVoteCount,
       votesRemaining,
       votesPerUserCap: VOTES_PER_USER,
     });

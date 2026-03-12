@@ -166,16 +166,14 @@ function RetroCardItemInner({ card, voterId, votesRemaining, voteCountsHidden, o
                     <TrashIcon />
                   </button>
                 </div>
-                {!voteCountsHidden && (
-                  <div className="akqaretro-card__votes flex items-center gap-0.5" role="group" aria-label="Votes">
-                    <button type="button" onClick={handleVoteRemove} disabled={card.userVotesOnCard <= 0} aria-label="Remove one vote" className="akqaretro-card__vote-minus flex items-center justify-center w-5 h-5 border border-[var(--akqa-border)] text-[var(--akqa-dove)] dark:text-[var(--akqa-white)] hover:bg-[var(--akqa-border)] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)] text-xs leading-none">−</button>
-                    <span className="akqaretro-card__vote-display flex items-center gap-0.5 w-7 justify-center text-[10px] text-[var(--akqa-muted)]" aria-label={`${card.voteCount} votes`}>
-                      <ThumbsUpIcon />
-                      {card.voteCount}
-                    </span>
-                    <button type="button" onClick={handleVoteAdd} disabled={votesRemaining <= 0} aria-label="Add one vote" className="akqaretro-card__vote-plus flex items-center justify-center w-5 h-5 border border-[var(--akqa-border)] text-[var(--akqa-dove)] dark:text-[var(--akqa-white)] hover:bg-[var(--akqa-border)] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)] text-xs leading-none">+</button>
-                  </div>
-                )}
+                <div className="akqaretro-card__votes flex items-center gap-0.5" role="group" aria-label="Votes">
+                  <button type="button" onClick={handleVoteRemove} disabled={card.userVotesOnCard <= 0} aria-label="Remove one vote" className="akqaretro-card__vote-minus flex items-center justify-center w-5 h-5 border border-[var(--akqa-border)] text-[var(--akqa-dove)] dark:text-[var(--akqa-white)] hover:bg-[var(--akqa-border)] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)] text-xs leading-none">−</button>
+                  <span className="akqaretro-card__vote-display flex items-center gap-0.5 w-7 justify-center text-[10px] text-[var(--akqa-muted)]" aria-label={voteCountsHidden ? "Vote count hidden" : `${card.voteCount} votes`}>
+                    <ThumbsUpIcon />
+                    {voteCountsHidden ? "\u00a0" : card.voteCount}
+                  </span>
+                  <button type="button" onClick={handleVoteAdd} disabled={votesRemaining <= 0} aria-label="Add one vote" className="akqaretro-card__vote-plus flex items-center justify-center w-5 h-5 border border-[var(--akqa-border)] text-[var(--akqa-dove)] dark:text-[var(--akqa-white)] hover:bg-[var(--akqa-border)] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)] text-xs leading-none">+</button>
+                </div>
               </div>
             </>
           )}
