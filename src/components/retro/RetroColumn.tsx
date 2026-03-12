@@ -20,6 +20,8 @@ interface RetroColumnProps {
   columnTitle: string;
   isFixed: boolean;
   cards: RetroCard[];
+  sortMode: "votes" | "order";
+  onSortModeChange: (columnId: string, mode: "votes" | "order") => void;
   voterId: string;
   creatorId?: string;
   votesRemaining: number;
@@ -36,6 +38,8 @@ export function RetroColumn({
   columnTitle,
   isFixed,
   cards,
+  sortMode,
+  onSortModeChange,
   voterId,
   creatorId,
   votesRemaining,
@@ -194,7 +198,19 @@ export function RetroColumn({
             </button>
           )}
         </div>
-        <div className="akqaretro-column__header-actions flex items-center gap-1 shrink-0">
+        <div className="akqaretro-column__header-actions flex flex-wrap items-center gap-2 shrink-0">
+          <label className="akqaretro-column__sort-label flex items-center gap-1.5 text-[var(--akqa-muted)]">
+            <span className="akqaretro-column__sort-text text-xs whitespace-nowrap">Sort:</span>
+            <select
+              value={sortMode}
+              onChange={(e) => onSortModeChange(columnId, e.target.value as "votes" | "order")}
+              aria-label={`Sort ${columnTitle} by`}
+              className="akqaretro-column__sort-select text-xs bg-[var(--background)] border border-[var(--akqa-border)] text-[var(--foreground)] px-2 py-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] cursor-pointer"
+            >
+              <option value="votes">Most votes first</option>
+              <option value="order">Order added</option>
+            </select>
+          </label>
           {!isFixed && (
             <button
               type="button"

@@ -17,6 +17,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
   const [data, setData] = useState<RetroState | null>(initial ?? null);
   const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState("");
+  const [columnSortMode, setColumnSortMode] = useState<Record<string, "votes" | "order">>({});
   const voterIdRef = useRef<string | undefined>(undefined);
   if (voterIdRef.current === undefined) voterIdRef.current = getVoterId();
   const voterId = voterIdRef.current;
@@ -150,16 +151,26 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
       if (!cards) return {} as Record<string, RetroCard[]>;
       return columnConfig.reduce(
         (acc, col) => {
-          acc[col.id] = cards
-            .filter((c) => c.column === col.id)
-            .sort((a, b) => (a.orderKey < b.orderKey ? -1 : 1));
+          const columnCards = cards.filter((c) => c.column === col.id);
+          const mode = columnSortMode[col.id] ?? "votes";
+          acc[col.id] =
+            mode === "order"
+              ? [...columnCards].sort((a, b) => (a.orderKey < b.orderKey ? -1 : 1))
+              : [...columnCards].sort((a, b) => {
+                  if (b.voteCount !== a.voteCount) return b.voteCount - a.voteCount;
+                  return a.orderKey < b.orderKey ? -1 : 1;
+                });
           return acc;
         },
         {} as Record<string, RetroCard[]>
       );
     },
-    [cards, columnConfig]
+    [cards, columnConfig, columnSortMode]
   );
+
+  const handleColumnSortModeChange = useCallback((columnId: string, mode: "votes" | "order") => {
+    setColumnSortMode((prev) => ({ ...prev, [columnId]: mode }));
+  }, []);
 
   if (loading && !data) {
     return (
@@ -213,6 +224,8 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
             columnTitle={col.title}
             isFixed={Boolean(col.fixed)}
             cards={cardsByColumn[col.id] ?? []}
+            sortMode={columnSortMode[col.id] ?? "votes"}
+            onSortModeChange={handleColumnSortModeChange}
             voterId={voterId}
             creatorId={voterId}
             votesRemaining={data.votesRemaining}
