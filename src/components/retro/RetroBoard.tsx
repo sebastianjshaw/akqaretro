@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getVoterId } from "@/lib/voterId";
 import type { RetroState, RetroCard, ColumnConfigItem } from "@/types/retro";
+import { ACTIONS_COLUMN_ID, ensureActionsLast } from "@/types/retro";
 import { RetroColumn } from "./RetroColumn";
 
 const POLL_INTERVAL_MS = 1500;
@@ -90,10 +91,13 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
   const handleAddColumn = useCallback(async () => {
     if (!data) return;
     const newId = crypto.randomUUID();
-    const newConfig = [
-      ...data.columnConfig,
-      { id: newId, title: "New column", order: data.columnConfig.length },
-    ];
+    const withoutActions = data.columnConfig.filter((c) => c.id !== ACTIONS_COLUMN_ID);
+    const actionsCol = data.columnConfig.find((c) => c.id === ACTIONS_COLUMN_ID);
+    const newConfig = ensureActionsLast([
+      { id: newId, title: "New column", order: 0 },
+      ...withoutActions.map((c, i) => ({ ...c, order: i + 1 })),
+      ...(actionsCol ? [actionsCol] : []),
+    ]);
     const url = voterId
       ? `/api/retros/${token}?creatorId=${encodeURIComponent(voterId)}`
       : `/api/retros/${token}`;

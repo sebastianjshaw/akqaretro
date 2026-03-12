@@ -6,6 +6,7 @@ import { safeParseJson } from "@/lib/safeJson";
 import {
   ACTIONS_COLUMN_ID,
   getDefaultColumnConfig,
+  ensureActionsLast,
   normalizeColumnConfig,
   type ColumnConfigItem,
 } from "@/types/retro";
@@ -54,9 +55,10 @@ export async function GET(
       };
     });
     const userVoteCount = voterId ? cards.reduce((sum, c) => sum + c.userVotesOnCard, 0) : 0;
-    const columnConfig =
+    const rawConfig =
       normalizeColumnConfig((retro as { columnConfig?: unknown }).columnConfig) ??
       getDefaultColumnConfig();
+    const columnConfig = ensureActionsLast(rawConfig);
     return NextResponse.json({
       id: retro.id,
       token: retro.token,
@@ -108,7 +110,7 @@ function parseAndValidateColumnConfig(
   if (normalized.length > LIMITS.COLUMNS_MAX) {
     return { ok: false, error: "Too many columns" };
   }
-  return { ok: true, config: normalized };
+  return { ok: true, config: ensureActionsLast(normalized) };
 }
 
 export async function PATCH(

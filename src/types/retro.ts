@@ -29,6 +29,17 @@ export function getDefaultColumnConfig(): ColumnConfigItem[] {
   return DEFAULT_COLUMN_CONFIG.map((c) => ({ ...c }));
 }
 
+/** Ensures Actions is always the rightmost column; renumbers order. */
+export function ensureActionsLast(config: ColumnConfigItem[]): ColumnConfigItem[] {
+  const actions = config.find((c) => c.id === ACTIONS_COLUMN_ID);
+  const rest = config
+    .filter((c) => c.id !== ACTIONS_COLUMN_ID)
+    .sort((a, b) => a.order - b.order);
+  const reordered = rest.map((c, i) => ({ ...c, order: i }));
+  if (actions) reordered.push({ ...actions, order: reordered.length });
+  return reordered;
+}
+
 export function normalizeColumnConfig(
   raw: unknown
 ): ColumnConfigItem[] | null {
