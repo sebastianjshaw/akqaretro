@@ -12,15 +12,16 @@ datasource db {
 }
 
 model Retro {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  title     String
-  date      String   // ISO date
-  userId    String?  // signed-in user id (from Auth.js / Google sub)
-  creatorId String?  // anonymous client id (fallback for "my retros" when not signed in)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  cards     Card[]
+  id           String   @id @default(uuid())
+  token        String   @unique
+  title        String
+  date         String   // ISO date
+  userId       String?  // signed-in user id (from Auth.js / Google sub)
+  creatorId    String?  // anonymous client id (fallback for "my retros" when not signed in)
+  columnConfig Json?    // [{ id, title, order, fixed? }]; actions always present and fixed
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  cards        Card[]
 
   @@index([creatorId])
   @@index([userId])
@@ -30,7 +31,7 @@ model Card {
   id        String   @id @default(uuid())
   retroId   String
   retro     Retro    @relation(fields: [retroId], references: [id], onDelete: Cascade)
-  column    String   // "positive" | "negative" | "actions"
+  column    String   // column id from retro.columnConfig (e.g. "positive", "negative", "actions", or custom id)
   text      String   @default("")
   orderKey  String   // fractional ordering (e.g. "a", "m", "z") or numeric string
   createdAt DateTime @default(now())

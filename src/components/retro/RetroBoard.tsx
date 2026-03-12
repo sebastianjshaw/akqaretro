@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getVoterId } from "@/lib/voterId";
-import { COLUMNS, type RetroState, type RetroCard, type ColumnType } from "@/types/retro";
+import type { RetroState, RetroCard, ColumnConfigItem } from "@/types/retro";
 import { RetroColumn } from "./RetroColumn";
 
 const POLL_INTERVAL_MS = 1500;
@@ -80,6 +80,37 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
     fetchRetro();
   }, [fetchRetro]);
 
+  const handleColumnConfigChange = useCallback(
+    (newConfig: ColumnConfigItem[]) => {
+      setData((prev) => (prev ? { ...prev, columnConfig: newConfig } : null));
+    },
+    []
+  );
+
+  const handleAddColumn = useCallback(async () => {
+    if (!data) return;
+    const newId = crypto.randomUUID();
+    const newConfig = [
+      ...data.columnConfig,
+      { id: newId, title: "New column", order: data.columnConfig.length },
+    ];
+    const url = voterId
+      ? `/api/retros/${token}?creatorId=${encodeURIComponent(voterId)}`
+      : `/api/retros/${token}`;
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ columnConfig: newConfig }),
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      window.alert(json.error ?? "Could not add column.");
+      return;
+    }
+    fetchRetro();
+  }, [data, token, voterId, fetchRetro]);
+
   const onVoteAddOptimistic = useCallback((cardId: string) => {
     setData((prev) => {
       if (!prev || prev.votesRemaining <= 0) return prev;
@@ -108,23 +139,22 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
     });
   }, []);
 
-  // Must run before any conditional return so hook order is stable (React #310)
-  // Depend only on data.cards — vote count changes (votesRemaining) don't affect grouping
+  const columnConfig = data?.columnConfig ?? [];
   const cards = data?.cards;
   const cardsByColumn = useMemo(
-    () =>
-      cards
-        ? COLUMNS.reduce(
-            (acc, col) => {
-              acc[col] = cards
-                .filter((c) => c.column === col)
-                .sort((a, b) => (a.orderKey < b.orderKey ? -1 : 1));
-              return acc;
-            },
-            {} as Record<ColumnType, RetroCard[]>
-          )
-        : ({} as Record<ColumnType, RetroCard[]>),
-    [cards]
+    () => {
+      if (!cards) return {} as Record<string, RetroCard[]>;
+      return columnConfig.reduce(
+        (acc, col) => {
+          acc[col.id] = cards
+            .filter((c) => c.column === col.id)
+            .sort((a, b) => (a.orderKey < b.orderKey ? -1 : 1));
+          return acc;
+        },
+        {} as Record<string, RetroCard[]>
+      );
+    },
+    [cards, columnConfig]
   );
 
   if (loading && !data) {
@@ -152,24 +182,39 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
           </h1>
           <p className="akqaretro-board__date akqaretro-caption text-[var(--akqa-muted)]">{data.date}</p>
         </div>
-        <div className="akqaretro-board__votes flex items-center gap-2 border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] px-4 py-2 akqaretro-caption" role="status" aria-live="polite">
-          <span className="akqaretro-board__votes-label text-[var(--akqa-muted)]">
-            Your votes:
-          </span>
-          <span className="akqaretro-board__votes-remaining text-[var(--foreground)]">
-            {data.votesRemaining} / {data.votesPerUserCap} left
-          </span>
+        <div className="akqaretro-board__header-right flex items-center gap-4">
+          <button
+            type="button"
+            onClick={handleAddColumn}
+            className="akqaretro-board__add-column text-sm text-[var(--akqa-muted)] hover:text-[var(--foreground)] border border-[var(--akqa-border)] bg-transparent px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"
+            aria-label="Add column"
+          >
+            Add column
+          </button>
+          <div className="akqaretro-board__votes flex items-center gap-2 border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] px-4 py-2 akqaretro-caption" role="status" aria-live="polite">
+            <span className="akqaretro-board__votes-label text-[var(--akqa-muted)]">
+              Your votes:
+            </span>
+            <span className="akqaretro-board__votes-remaining text-[var(--foreground)]">
+              {data.votesRemaining} / {data.votesPerUserCap} left
+            </span>
+          </div>
         </div>
       </header>
-      <div className="akqaretro-board__columns grid grid-cols-1 md:grid-cols-3 gap-6 min-w-0">
-        {COLUMNS.map((column) => (
+      <div className="akqaretro-board__columns grid grid-cols-1 md:grid-cols-3 gap-6 min-w-0" style={{ gridTemplateColumns: `repeat(${columnConfig.length}, minmax(0, 1fr))` }}>
+        {columnConfig.map((col) => (
           <RetroColumn
-            key={column}
-            column={column}
-            cards={cardsByColumn[column]}
+            key={col.id}
+            columnId={col.id}
+            columnTitle={col.title}
+            isFixed={Boolean(col.fixed)}
+            cards={cardsByColumn[col.id] ?? []}
             voterId={voterId}
+            creatorId={voterId}
             votesRemaining={data.votesRemaining}
             token={token}
+            columnConfig={columnConfig}
+            onColumnConfigChange={handleColumnConfigChange}
             onRefetch={refetch}
             onVoteAddOptimistic={onVoteAddOptimistic}
             onVoteRemoveOptimistic={onVoteRemoveOptimistic}

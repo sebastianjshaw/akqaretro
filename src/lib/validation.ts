@@ -9,6 +9,9 @@ export const LIMITS = {
   VOTER_ID_MAX_LENGTH: 64,
   USER_ID_MAX_LENGTH: 256,
   MY_RETROS_MAX: 100,
+  COLUMN_TITLE_MAX_LENGTH: 80,
+  COLUMN_ID_MAX_LENGTH: 64,
+  COLUMNS_MAX: 12,
 } as const;
 
 export function truncate(s: string, max: number): string {

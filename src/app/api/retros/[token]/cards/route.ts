@@ -3,7 +3,10 @@ import { prisma } from "@/lib/db";
 import { nextOrderKey } from "@/lib/order";
 import { LIMITS, clampLength } from "@/lib/validation";
 import { safeParseJson } from "@/lib/safeJson";
-import { COLUMNS, type ColumnType } from "@/types/retro";
+import {
+  getDefaultColumnConfig,
+  normalizeColumnConfig,
+} from "@/types/retro";
 
 export async function POST(
   request: NextRequest,
@@ -19,8 +22,13 @@ export async function POST(
     if (!body) {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
-    const column = String(body.column ?? "").toLowerCase();
-    if (!COLUMNS.includes(column as ColumnType)) {
+    const columnRaw = String(body.column ?? "").trim();
+    const column = clampLength(columnRaw, LIMITS.COLUMN_ID_MAX_LENGTH);
+    const columnConfig =
+      normalizeColumnConfig((retro as { columnConfig?: unknown }).columnConfig) ??
+      getDefaultColumnConfig();
+    const validIds = new Set(columnConfig.map((c) => c.id));
+    if (!column || !validIds.has(column)) {
       return NextResponse.json({ error: "Invalid column" }, { status: 400 });
     }
     const text = clampLength(String(body.text ?? ""), LIMITS.CARD_TEXT_MAX_LENGTH);

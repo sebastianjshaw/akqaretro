@@ -1,17 +1,62 @@
-export type ColumnType = "positive" | "negative" | "actions";
+/** Column id: "positive" | "negative" | "actions" or custom id (uuid). */
+export type ColumnType = string;
 
-export const COLUMNS: readonly ColumnType[] = ["positive", "negative", "actions"];
+export interface ColumnConfigItem {
+  id: string;
+  title: string;
+  order: number;
+  fixed?: boolean;
+}
 
-export const COLUMN_LABELS: Record<ColumnType, string> = {
+export const ACTIONS_COLUMN_ID = "actions";
+
+export const DEFAULT_COLUMN_CONFIG: ColumnConfigItem[] = [
+  { id: "positive", title: "Positive", order: 0 },
+  { id: "negative", title: "Negative", order: 1 },
+  { id: ACTIONS_COLUMN_ID, title: "Actions", order: 2, fixed: true },
+];
+
+/** Legacy: ordered column ids for retros without columnConfig. */
+export const COLUMNS: readonly string[] = ["positive", "negative", "actions"];
+
+export const COLUMN_LABELS: Record<string, string> = {
   positive: "Positive",
   negative: "Negative",
   actions: "Actions",
 };
 
+export function getDefaultColumnConfig(): ColumnConfigItem[] {
+  return DEFAULT_COLUMN_CONFIG.map((c) => ({ ...c }));
+}
+
+export function normalizeColumnConfig(
+  raw: unknown
+): ColumnConfigItem[] | null {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const hasActions = raw.some(
+    (c: unknown) => c && typeof c === "object" && (c as { id?: string }).id === ACTIONS_COLUMN_ID
+  );
+  if (!hasActions) return null;
+  const sorted = [...raw].sort(
+    (a: unknown, b: unknown) =>
+      (Number((a as { order?: number }).order) ?? 0) -
+      (Number((b as { order?: number }).order) ?? 0)
+  );
+  return sorted.map((c: unknown) => {
+    const o = c as { id?: string; title?: string; order?: number; fixed?: boolean };
+    return {
+      id: String(o.id ?? ""),
+      title: String(o.title ?? ""),
+      order: Number(o.order) ?? 0,
+      fixed: Boolean(o.fixed),
+    };
+  });
+}
+
 export interface RetroCard {
   id: string;
   retroId: string;
-  column: ColumnType;
+  column: string;
   text: string;
   orderKey: string;
   createdAt: string;
@@ -29,6 +74,7 @@ export interface RetroState {
   createdAt: string;
   updatedAt: string;
   cards: RetroCard[];
+  columnConfig: ColumnConfigItem[];
   userVoteCount: number;
   votesRemaining: number;
   votesPerUserCap: number;

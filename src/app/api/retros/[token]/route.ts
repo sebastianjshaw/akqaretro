@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { LIMITS, clampLength } from "@/lib/validation";
+import { safeParseJson } from "@/lib/safeJson";
+import {
+  ACTIONS_COLUMN_ID,
+  getDefaultColumnConfig,
+  normalizeColumnConfig,
+  type ColumnConfigItem,
+} from "@/types/retro";
 
 const VOTES_PER_USER = 6;
 const TOKEN_MAX_LENGTH = 256;
@@ -47,6 +54,9 @@ export async function GET(
       };
     });
     const userVoteCount = voterId ? cards.reduce((sum, c) => sum + c.userVotesOnCard, 0) : 0;
+    const columnConfig =
+      normalizeColumnConfig((retro as { columnConfig?: unknown }).columnConfig) ??
+      getDefaultColumnConfig();
     return NextResponse.json({
       id: retro.id,
       token: retro.token,
@@ -55,6 +65,7 @@ export async function GET(
       createdAt: retro.createdAt.toISOString(),
       updatedAt: retro.updatedAt.toISOString(),
       cards,
+      columnConfig,
       userVoteCount,
       votesRemaining: Math.max(0, VOTES_PER_USER - userVoteCount),
       votesPerUserCap: VOTES_PER_USER,
@@ -66,6 +77,97 @@ export async function GET(
 }
 
 export const dynamic = "force-dynamic";
+
+function parseAndValidateColumnConfig(
+  raw: unknown
+): { ok: true; config: ColumnConfigItem[] } | { ok: false; error: string } {
+  const normalized = normalizeColumnConfig(raw);
+  if (!normalized || normalized.length === 0) {
+    return { ok: false, error: "columnConfig must be a non-empty array" };
+  }
+  const actionsCol = normalized.find((c) => c.id === ACTIONS_COLUMN_ID);
+  if (!actionsCol) {
+    return { ok: false, error: "Actions column is required" };
+  }
+  if (!actionsCol.fixed) {
+    return { ok: false, error: "Actions column must be fixed" };
+  }
+  const ids = new Set<string>();
+  for (const c of normalized) {
+    if (!c.id.trim()) return { ok: false, error: "Column id is required" };
+    if (ids.has(c.id)) return { ok: false, error: "Duplicate column id" };
+    ids.add(c.id);
+    if (c.id.length > LIMITS.COLUMN_ID_MAX_LENGTH) {
+      return { ok: false, error: "Column id too long" };
+    }
+    const title = String(c.title ?? "").trim();
+    if (title.length > LIMITS.COLUMN_TITLE_MAX_LENGTH) {
+      return { ok: false, error: "Column title too long" };
+    }
+  }
+  if (normalized.length > LIMITS.COLUMNS_MAX) {
+    return { ok: false, error: "Too many columns" };
+  }
+  return { ok: true, config: normalized };
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ token: string }> }
+) {
+  try {
+    const { token } = await params;
+    const safeToken = clampLength(token ?? "", TOKEN_MAX_LENGTH);
+    if (!safeToken) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 400 });
+    }
+    const session = await auth();
+    const creatorIdRaw = request.nextUrl.searchParams.get("creatorId") ?? "";
+    const creatorId = creatorIdRaw ? clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH) : null;
+
+    const retro = await prisma.retro.findUnique({ where: { token: safeToken } });
+    if (!retro) {
+      return NextResponse.json({ error: "Retro not found" }, { status: 404 });
+    }
+    const isOwnerByUser = session?.user?.id && retro.userId === session.user.id;
+    const isOwnerByCreator =
+      !session?.user?.id && creatorId && retro.creatorId === creatorId;
+    if (!isOwnerByUser && !isOwnerByCreator) {
+      return NextResponse.json({ error: "Not allowed to edit this retro" }, { status: 403 });
+    }
+
+    const body = await safeParseJson<{ columnConfig?: unknown }>(request);
+    if (!body || !("columnConfig" in body)) {
+      return NextResponse.json({ error: "columnConfig is required" }, { status: 400 });
+    }
+    const parsed = parseAndValidateColumnConfig(body.columnConfig);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+
+    const newIds = new Set(parsed.config.map((c) => c.id));
+    const prevConfig = normalizeColumnConfig(
+      (retro as { columnConfig?: unknown }).columnConfig
+    ) ?? getDefaultColumnConfig();
+    const removedIds = prevConfig
+      .filter((c) => !newIds.has(c.id) && c.id !== ACTIONS_COLUMN_ID)
+      .map((c) => c.id);
+    if (removedIds.length > 0) {
+      await prisma.card.deleteMany({
+        where: { retroId: retro.id, column: { in: removedIds } },
+      });
+    }
+
+    await prisma.retro.update({
+      where: { token: safeToken },
+      data: { columnConfig: parsed.config as object },
+    });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error("PATCH /api/retros/[token]", e);
+    return NextResponse.json({ error: "Failed to update retro" }, { status: 500 });
+  }
+}
 
 export async function DELETE(
   request: NextRequest,

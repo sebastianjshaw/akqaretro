@@ -3,7 +3,10 @@ import { prisma } from "@/lib/db";
 import { midpoint } from "@/lib/order";
 import { LIMITS, clampLength } from "@/lib/validation";
 import { safeParseJson } from "@/lib/safeJson";
-import { COLUMNS, type ColumnType } from "@/types/retro";
+import {
+  getDefaultColumnConfig,
+  normalizeColumnConfig,
+} from "@/types/retro";
 
 export async function DELETE(
   _request: NextRequest,
@@ -39,8 +42,19 @@ export async function PATCH(
     }
     const updates: { text?: string; column?: string; orderKey?: string } = {};
     if (typeof body.text === "string") updates.text = clampLength(body.text, LIMITS.CARD_TEXT_MAX_LENGTH);
-    if (typeof body.column === "string" && COLUMNS.includes(body.column as ColumnType)) {
-      updates.column = body.column;
+    if (typeof body.column === "string") {
+      const retro = await prisma.retro.findUnique({
+        where: { id: card.retroId },
+        select: { columnConfig: true },
+      });
+      const columnConfig =
+        retro
+          ? normalizeColumnConfig((retro as { columnConfig?: unknown }).columnConfig) ??
+            getDefaultColumnConfig()
+          : getDefaultColumnConfig();
+      const validIds = new Set(columnConfig.map((c) => c.id));
+      const col = clampLength(body.column.trim(), LIMITS.COLUMN_ID_MAX_LENGTH);
+      if (col && validIds.has(col)) updates.column = col;
     }
     if (typeof body.orderKey === "string") updates.orderKey = body.orderKey;
     if (typeof body.newIndex === "number") {
