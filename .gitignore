@@ -44,3 +44,6 @@ prisma/*.db-journal
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local brand brief (not for version control)
+docs/AKQA_BRAND_BRIEF_AI.md

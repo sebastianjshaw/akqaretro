@@ -197,7 +197,53 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
           </h1>
           <p className="akqaretro-board__date akqaretro-caption text-[var(--akqa-muted)]">{data.date}</p>
         </div>
-        <div className="akqaretro-board__header-right flex items-center gap-4">
+        <div className="akqaretro-board__header-right flex flex-wrap items-center gap-4">
+          {data.isOwner && (
+            <div className="akqaretro-board__owner-toggles flex items-center gap-4 border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] px-4 py-2 akqaretro-caption">
+              <label className="akqaretro-board__toggle-hide-posts flex items-center gap-2 cursor-pointer text-[var(--akqa-muted)] hover:text-[var(--foreground)]">
+                <input
+                  type="checkbox"
+                  checked={Boolean(data.hideCardsFromNonOwners)}
+                  onChange={async (e) => {
+                    const checked = e.target.checked;
+                    setData((prev) => (prev ? { ...prev, hideCardsFromNonOwners: checked } : null));
+                    const url = voterId ? `/api/retros/${token}?creatorId=${encodeURIComponent(voterId)}` : `/api/retros/${token}`;
+                    const res = await fetch(url, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify({ hideCardsFromNonOwners: checked }),
+                    });
+                    if (!res.ok) fetchRetro();
+                  }}
+                  className="akqaretro-board__toggle-hide-posts-input"
+                  aria-label="Hide posts from others until disabled"
+                />
+                <span className="akqaretro-board__toggle-hide-posts-label">Hide posts from others</span>
+              </label>
+              <label className="akqaretro-board__toggle-hide-votes flex items-center gap-2 cursor-pointer text-[var(--akqa-muted)] hover:text-[var(--foreground)]">
+                <input
+                  type="checkbox"
+                  checked={Boolean(data.voteCountsHidden)}
+                  onChange={async (e) => {
+                    const checked = e.target.checked;
+                    setData((prev) => (prev ? { ...prev, voteCountsHidden: checked } : null));
+                    const url = voterId ? `/api/retros/${token}?creatorId=${encodeURIComponent(voterId)}` : `/api/retros/${token}`;
+                    const res = await fetch(url, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify({ hideVoteCounts: checked }),
+                    });
+                    if (!res.ok) fetchRetro();
+                  }}
+                  className="akqaretro-board__toggle-hide-votes-input"
+                  aria-label="Hide vote counts for everyone"
+                />
+                <span className="akqaretro-board__toggle-hide-votes-label">Hide vote counts</span>
+              </label>
+            </div>
+          )}
           <button
             type="button"
             onClick={handleAddColumn}
@@ -206,14 +252,16 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
           >
             Add column
           </button>
-          <div className="akqaretro-board__votes flex items-center gap-2 border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] px-4 py-2 akqaretro-caption" role="status" aria-live="polite">
-            <span className="akqaretro-board__votes-label text-[var(--akqa-muted)]">
-              Your votes:
-            </span>
-            <span className="akqaretro-board__votes-remaining text-[var(--foreground)]">
-              {data.votesRemaining} / {data.votesPerUserCap} left
-            </span>
-          </div>
+          {!data.voteCountsHidden && (
+            <div className="akqaretro-board__votes flex items-center gap-2 border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] px-4 py-2 akqaretro-caption" role="status" aria-live="polite">
+              <span className="akqaretro-board__votes-label text-[var(--akqa-muted)]">
+                Your votes:
+              </span>
+              <span className="akqaretro-board__votes-remaining text-[var(--foreground)]">
+                {data.votesRemaining} / {data.votesPerUserCap} left
+              </span>
+            </div>
+          )}
         </div>
       </header>
       <div className="akqaretro-board__columns grid grid-cols-1 md:grid-cols-3 gap-6 min-w-0" style={{ gridTemplateColumns: `repeat(${columnConfig.length}, minmax(0, 1fr))` }}>
@@ -229,6 +277,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
             voterId={voterId}
             creatorId={voterId}
             votesRemaining={data.votesRemaining}
+            voteCountsHidden={Boolean(data.voteCountsHidden)}
             token={token}
             columnConfig={columnConfig}
             onColumnConfigChange={handleColumnConfigChange}

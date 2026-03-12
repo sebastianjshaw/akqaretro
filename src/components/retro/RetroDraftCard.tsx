@@ -7,6 +7,7 @@ import { CheckIcon, XIcon } from "./icons";
 interface RetroDraftCardProps {
   token: string;
   column: ColumnType;
+  creatorId?: string;
   onSaved: () => void;
   onCancel: () => void;
 }
@@ -15,7 +16,7 @@ interface RetroDraftCardProps {
  * Local-only draft card. Only the current user sees it until they save (submit).
  * Saving creates the card on the server; then it becomes visible to everyone.
  */
-export function RetroDraftCard({ token, column, onSaved, onCancel }: RetroDraftCardProps) {
+export function RetroDraftCard({ token, column, creatorId, onSaved, onCancel }: RetroDraftCardProps) {
   const [text, setText] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -24,10 +25,12 @@ export function RetroDraftCard({ token, column, onSaved, onCancel }: RetroDraftC
     if (!trimmed) return;
     setSaving(true);
     try {
+      const body: { column: string; text: string; creatorId?: string } = { column, text: trimmed };
+      if (creatorId) body.creatorId = creatorId;
       const res = await fetch(`/api/retros/${token}/cards`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ column, text: trimmed }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         onSaved();
@@ -35,7 +38,7 @@ export function RetroDraftCard({ token, column, onSaved, onCancel }: RetroDraftC
     } finally {
       setSaving(false);
     }
-  }, [token, column, text, onSaved]);
+  }, [token, column, creatorId, text, onSaved]);
 
   return (
     <div className="akqaretro-draft-card mb-1.5 border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] shadow-sm">

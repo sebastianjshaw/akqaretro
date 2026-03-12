@@ -37,10 +37,23 @@ export async function GET(
     if (!retro) {
       return NextResponse.json({ error: "Retro not found" }, { status: 404 });
     }
+    const session = await auth();
     const voterIdRaw = _request.nextUrl.searchParams.get("voterId") ?? "";
     const voterId = voterIdRaw.slice(0, LIMITS.VOTER_ID_MAX_LENGTH);
-    const cards = retro.cards.map((c) => {
+    const isOwner = !!(session?.user?.id && retro.userId === session.user.id);
+    const hideCardsFromNonOwners = Boolean((retro as { hideCardsFromNonOwners?: boolean }).hideCardsFromNonOwners);
+    const hideVoteCounts = Boolean((retro as { hideVoteCounts?: boolean }).hideVoteCounts);
+    let cardsRaw = retro.cards;
+    if (hideCardsFromNonOwners && !isOwner) {
+      cardsRaw = retro.cards.filter(
+        (c) =>
+          (session?.user?.id && (c as { userId?: string }).userId === session.user.id) ||
+          (voterId && (c as { creatorId?: string }).creatorId === voterId)
+      );
+    }
+    const cards = cardsRaw.map((c) => {
       const userVotesOnCard = voterId ? c.votes.filter((v) => v.voterId === voterId).length : 0;
+      const voteCount = c.votes.length;
       return {
         id: c.id,
         retroId: c.retroId,
@@ -49,12 +62,15 @@ export async function GET(
         orderKey: c.orderKey,
         createdAt: c.createdAt.toISOString(),
         updatedAt: c.updatedAt.toISOString(),
-        voteCount: c.votes.length,
+        voteCount: hideVoteCounts ? 0 : voteCount,
         userVoted: userVotesOnCard > 0,
-        userVotesOnCard,
+        userVotesOnCard: hideVoteCounts ? 0 : userVotesOnCard,
       };
     });
-    const userVoteCount = voterId ? cards.reduce((sum, c) => sum + c.userVotesOnCard, 0) : 0;
+    const userVoteCount = voterId
+      ? cardsRaw.reduce((sum, c) => sum + c.votes.filter((v) => v.voterId === voterId).length, 0)
+      : 0;
+    const votesRemaining = hideVoteCounts ? 0 : Math.max(0, VOTES_PER_USER - userVoteCount);
     const rawConfig =
       normalizeColumnConfig((retro as { columnConfig?: unknown }).columnConfig) ??
       getDefaultColumnConfig();
@@ -68,8 +84,11 @@ export async function GET(
       updatedAt: retro.updatedAt.toISOString(),
       cards,
       columnConfig,
-      userVoteCount,
-      votesRemaining: Math.max(0, VOTES_PER_USER - userVoteCount),
+      isOwner,
+      hideCardsFromNonOwners,
+      voteCountsHidden: hideVoteCounts,
+      userVoteCount: hideVoteCounts ? 0 : userVoteCount,
+      votesRemaining,
       votesPerUserCap: VOTES_PER_USER,
     });
   } catch (e) {
@@ -138,31 +157,46 @@ export async function PATCH(
       return NextResponse.json({ error: "Not allowed to edit this retro" }, { status: 403 });
     }
 
-    const body = await safeParseJson<{ columnConfig?: unknown }>(request);
-    if (!body || !("columnConfig" in body)) {
-      return NextResponse.json({ error: "columnConfig is required" }, { status: 400 });
+    const body = await safeParseJson<{
+      columnConfig?: unknown;
+      hideCardsFromNonOwners?: boolean;
+      hideVoteCounts?: boolean;
+    }>(request);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
-    const parsed = parseAndValidateColumnConfig(body.columnConfig);
-    if (!parsed.ok) {
-      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    const updateData: { columnConfig?: object; hideCardsFromNonOwners?: boolean; hideVoteCounts?: boolean } = {};
+    if (body.columnConfig !== undefined) {
+      const parsed = parseAndValidateColumnConfig(body.columnConfig);
+      if (!parsed.ok) {
+        return NextResponse.json({ error: parsed.error }, { status: 400 });
+      }
+      updateData.columnConfig = parsed.config as object;
+      const newIds = new Set(parsed.config.map((c) => c.id));
+      const prevConfig = normalizeColumnConfig(
+        (retro as { columnConfig?: unknown }).columnConfig
+      ) ?? getDefaultColumnConfig();
+      const removedIds = prevConfig
+        .filter((c) => !newIds.has(c.id) && c.id !== ACTIONS_COLUMN_ID)
+        .map((c) => c.id);
+      if (removedIds.length > 0) {
+        await prisma.card.deleteMany({
+          where: { retroId: retro.id, column: { in: removedIds } },
+        });
+      }
     }
-
-    const newIds = new Set(parsed.config.map((c) => c.id));
-    const prevConfig = normalizeColumnConfig(
-      (retro as { columnConfig?: unknown }).columnConfig
-    ) ?? getDefaultColumnConfig();
-    const removedIds = prevConfig
-      .filter((c) => !newIds.has(c.id) && c.id !== ACTIONS_COLUMN_ID)
-      .map((c) => c.id);
-    if (removedIds.length > 0) {
-      await prisma.card.deleteMany({
-        where: { retroId: retro.id, column: { in: removedIds } },
-      });
+    if (typeof body.hideCardsFromNonOwners === "boolean") {
+      updateData.hideCardsFromNonOwners = body.hideCardsFromNonOwners;
     }
-
+    if (typeof body.hideVoteCounts === "boolean") {
+      updateData.hideVoteCounts = body.hideVoteCounts;
+    }
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+    }
     await prisma.retro.update({
       where: { token: safeToken },
-      data: { columnConfig: parsed.config as object },
+      data: updateData,
     });
     return NextResponse.json({ ok: true });
   } catch (e) {

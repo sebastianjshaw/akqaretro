@@ -25,6 +25,7 @@ interface RetroColumnProps {
   voterId: string;
   creatorId?: string;
   votesRemaining: number;
+  voteCountsHidden?: boolean;
   token: string;
   columnConfig: ColumnConfigItem[];
   onColumnConfigChange: (newConfig: ColumnConfigItem[]) => void;
@@ -43,6 +44,7 @@ export function RetroColumn({
   voterId,
   creatorId,
   votesRemaining,
+  voteCountsHidden,
   token,
   columnConfig,
   onColumnConfigChange,
@@ -207,8 +209,8 @@ export function RetroColumn({
               aria-label={`Sort ${columnTitle} by`}
               className="akqaretro-column__sort-select text-xs bg-[var(--background)] border border-[var(--akqa-border)] text-[var(--foreground)] px-2 py-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] cursor-pointer"
             >
-              <option value="votes">Most votes first</option>
-              <option value="order">Order added</option>
+              <option value="votes">By Votes</option>
+              <option value="order">by Added</option>
             </select>
           </label>
           {!isFixed && (
@@ -241,6 +243,7 @@ export function RetroColumn({
                 card={card}
                 voterId={voterId}
                 votesRemaining={votesRemaining}
+                voteCountsHidden={voteCountsHidden}
                 onRefetch={onRefetch}
                 onVoteAddOptimistic={onVoteAddOptimistic}
                 onVoteRemoveOptimistic={onVoteRemoveOptimistic}
@@ -251,6 +254,7 @@ export function RetroColumn({
             <RetroDraftCard
               token={token}
               column={columnId}
+              creatorId={creatorId}
               onSaved={handleDraftSaved}
               onCancel={handleDraftCancel}
             />

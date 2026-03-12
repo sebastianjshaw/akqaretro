@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { nextOrderKey } from "@/lib/order";
 import { LIMITS, clampLength } from "@/lib/validation";
@@ -18,7 +19,8 @@ export async function POST(
     if (!retro) {
       return NextResponse.json({ error: "Retro not found" }, { status: 404 });
     }
-    const body = await safeParseJson<{ column?: string; text?: string }>(request);
+    const session = await auth();
+    const body = await safeParseJson<{ column?: string; text?: string; creatorId?: string }>(request);
     if (!body) {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
@@ -32,6 +34,10 @@ export async function POST(
       return NextResponse.json({ error: "Invalid column" }, { status: 400 });
     }
     const text = clampLength(String(body.text ?? ""), LIMITS.CARD_TEXT_MAX_LENGTH);
+    const creatorId = typeof body.creatorId === "string"
+      ? clampLength(body.creatorId.trim(), LIMITS.VOTER_ID_MAX_LENGTH) || null
+      : null;
+    const userId = session?.user?.id ?? null;
     const lastInColumn = await prisma.card.findFirst({
       where: { retroId: retro.id, column },
       orderBy: { orderKey: "desc" },
@@ -39,7 +45,7 @@ export async function POST(
     });
     const orderKey = nextOrderKey(lastInColumn?.orderKey ?? null);
     const card = await prisma.card.create({
-      data: { retroId: retro.id, column, text, orderKey },
+      data: { retroId: retro.id, column, text, orderKey, creatorId, userId },
     });
     return NextResponse.json({
       id: card.id,

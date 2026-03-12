@@ -89,4 +89,10 @@ export interface RetroState {
   userVoteCount: number;
   votesRemaining: number;
   votesPerUserCap: number;
+  /** True when the current user is the retro owner (logged-in). */
+  isOwner?: boolean;
+  /** When true, owner has hidden others’ cards from non-owners. */
+  hideCardsFromNonOwners?: boolean;
+  /** When true, vote counts and vote controls are hidden for everyone. */
+  voteCountsHidden?: boolean;
 }

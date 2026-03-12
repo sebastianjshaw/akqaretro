@@ -12,16 +12,18 @@ datasource db {
 }
 
 model Retro {
-  id           String   @id @default(uuid())
-  token        String   @unique
-  title        String
-  date         String   // ISO date
-  userId       String?  // signed-in user id (from Auth.js / Google sub)
-  creatorId    String?  // anonymous client id (fallback for "my retros" when not signed in)
-  columnConfig Json?    // [{ id, title, order, fixed? }]; actions always present and fixed
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  cards        Card[]
+  id                      String   @id @default(uuid())
+  token                   String   @unique
+  title                   String
+  date                    String   // ISO date
+  userId                  String?  // signed-in user id (from Auth.js / Google sub)
+  creatorId               String?  // anonymous client id (fallback for "my retros" when not signed in)
+  columnConfig            Json?    // [{ id, title, order, fixed? }]; actions always present and fixed
+  hideCardsFromNonOwners  Boolean  @default(false) // when true, non-owners only see their own cards
+  hideVoteCounts          Boolean  @default(false) // when true, vote counts hidden for everyone
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  cards                   Card[]
 
   @@index([creatorId])
   @@index([userId])
@@ -34,11 +36,15 @@ model Card {
   column    String   // column id from retro.columnConfig (e.g. "positive", "negative", "actions", or custom id)
   text      String   @default("")
   orderKey  String   // fractional ordering (e.g. "a", "m", "z") or numeric string
+  creatorId String?  // anonymous id of who added the card (for "hide posts" filtering)
+  userId    String?  // signed-in user id of who added the card (for "hide posts" filtering)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   votes     Vote[]
 
   @@index([retroId, column])
+  @@index([retroId, creatorId])
+  @@index([retroId, userId])
 }
 
 model Vote {
