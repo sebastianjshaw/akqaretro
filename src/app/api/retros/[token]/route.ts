@@ -51,9 +51,18 @@ export async function GET(
           (voterId && (c as { creatorId?: string }).creatorId === voterId)
       );
     }
-    const cards = cardsRaw.map((c) => {
+    // Sort so action column has undone first, then done (each group by orderKey)
+    const sortedCardsRaw = [...cardsRaw].sort((a, b) => {
+      if (a.column !== b.column) return 0;
+      const aDone = (a as { done?: boolean }).done ? 1 : 0;
+      const bDone = (b as { done?: boolean }).done ? 1 : 0;
+      if (a.column === ACTIONS_COLUMN_ID && aDone !== bDone) return aDone - bDone;
+      return a.orderKey.localeCompare(b.orderKey);
+    });
+    const cards = sortedCardsRaw.map((c) => {
       const userVotesOnCard = voterId ? c.votes.filter((v) => v.voterId === voterId).length : 0;
       const voteCount = c.votes.length;
+      const done = (c as { done?: boolean }).done ?? false;
       return {
         id: c.id,
         retroId: c.retroId,
@@ -64,7 +73,8 @@ export async function GET(
         updatedAt: c.updatedAt.toISOString(),
         voteCount: hideVoteCounts ? 0 : voteCount,
         userVoted: userVotesOnCard > 0,
-        userVotesOnCard, // real value so +/- buttons work when counts are hidden
+        userVotesOnCard,
+        done,
       };
     });
     const userVoteCount = voterId

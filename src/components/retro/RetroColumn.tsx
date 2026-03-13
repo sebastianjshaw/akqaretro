@@ -19,6 +19,7 @@ interface RetroColumnProps {
   columnId: string;
   columnTitle: string;
   isFixed: boolean;
+  isActionsColumn?: boolean;
   cards: RetroCard[];
   sortMode: "votes" | "order";
   onSortModeChange: (columnId: string, mode: "votes" | "order") => void;
@@ -38,6 +39,7 @@ export function RetroColumn({
   columnId,
   columnTitle,
   isFixed,
+  isActionsColumn,
   cards,
   sortMode,
   onSortModeChange,
@@ -244,6 +246,7 @@ export function RetroColumn({
                 voterId={voterId}
                 votesRemaining={votesRemaining}
                 voteCountsHidden={voteCountsHidden}
+                isActionsColumn={isActionsColumn}
                 onRefetch={onRefetch}
                 onVoteAddOptimistic={onVoteAddOptimistic}
                 onVoteRemoveOptimistic={onVoteRemoveOptimistic}

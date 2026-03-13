@@ -12,21 +12,25 @@ datasource db {
 }
 
 model Retro {
-  id                      String   @id @default(uuid())
-  token                   String   @unique
+  id                      String    @id @default(uuid())
+  token                   String    @unique
   title                   String
-  date                    String   // ISO date
-  userId                  String?  // signed-in user id (from Auth.js / Google sub)
-  creatorId               String?  // anonymous client id (fallback for "my retros" when not signed in)
-  columnConfig            Json?    // [{ id, title, order, fixed? }]; actions always present and fixed
-  hideCardsFromNonOwners  Boolean  @default(false) // when true, non-owners only see their own cards
-  hideVoteCounts          Boolean  @default(false) // when true, vote counts hidden for everyone
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+  date                    String    // ISO date
+  userId                  String?   // signed-in user id (from Auth.js / Google sub)
+  creatorId               String?   // anonymous client id (fallback for "my retros" when not signed in)
+  columnConfig            Json?     // [{ id, title, order, fixed? }]; actions always present and fixed
+  hideCardsFromNonOwners  Boolean   @default(false) // when true, non-owners only see their own cards
+  hideVoteCounts          Boolean   @default(false) // when true, vote counts hidden for everyone
+  lineageId               String?   // same for retros/snapshots in one recurring chain
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
   cards                   Card[]
+  snapshotsAsSource       Snapshot[] @relation("SnapshotSource")
+  snapshotsAsResult       Snapshot[] @relation("SnapshotResult")
 
   @@index([creatorId])
   @@index([userId])
+  @@index([lineageId])
 }
 
 model Card {
@@ -38,6 +42,7 @@ model Card {
   orderKey  String   // fractional ordering (e.g. "a", "m", "z") or numeric string
   creatorId String?  // anonymous id of who added the card (for "hide posts" filtering)
   userId    String?  // signed-in user id of who added the card (for "hide posts" filtering)
+  done      Boolean  @default(false) // for action column: when true, faded and sorted below undone
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   votes     Vote[]
@@ -57,4 +62,19 @@ model Vote {
 
   @@index([cardId, voterId])
   @@index([retroId, voterId])
+}
+
+model Snapshot {
+  id             String   @id @default(uuid())
+  lineageId      String   // same as retros in this chain
+  sourceRetroId  String   // retro we snapped from
+  sourceRetro    Retro    @relation("SnapshotSource", fields: [sourceRetroId], references: [id], onDelete: Cascade)
+  resultRetroId  String?  // new retro created (empty except actions)
+  resultRetro    Retro?   @relation("SnapshotResult", fields: [resultRetroId], references: [id], onDelete: SetNull)
+  createdAt      DateTime @default(now())
+  columnConfig   Json     // saved column config
+  cards          Json     // saved cards: [{ id, column, text, orderKey, voteCount, done? }]
+
+  @@index([lineageId])
+  @@index([sourceRetroId])
 }

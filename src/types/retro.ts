@@ -75,6 +75,22 @@ export interface RetroCard {
   voteCount: number;
   userVoted: boolean;
   userVotesOnCard: number;
+  /** Actions column only: when true, shown faded and below undone */
+  done?: boolean;
+}
+
+export interface SnapshotListItem {
+  id: string;
+  createdAt: string;
+  sourceRetroId: string;
+  resultRetroId: string | null;
+}
+
+export interface SnapshotDetail {
+  id: string;
+  createdAt: string;
+  columnConfig: ColumnConfigItem[];
+  cards: { id: string; column: string; text: string; orderKey: string; voteCount: number; done: boolean }[];
 }
 
 export interface RetroState {

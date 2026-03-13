@@ -4,6 +4,7 @@ import { midpoint } from "@/lib/order";
 import { LIMITS, clampLength } from "@/lib/validation";
 import { safeParseJson } from "@/lib/safeJson";
 import {
+  ACTIONS_COLUMN_ID,
   getDefaultColumnConfig,
   normalizeColumnConfig,
 } from "@/types/retro";
@@ -36,11 +37,11 @@ export async function PATCH(
     if (!card) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
-    const body = await safeParseJson<{ text?: string; column?: string; orderKey?: string; newIndex?: number }>(request);
+    const body = await safeParseJson<{ text?: string; column?: string; orderKey?: string; newIndex?: number; done?: boolean }>(request);
     if (!body) {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
-    const updates: { text?: string; column?: string; orderKey?: string } = {};
+    const updates: { text?: string; column?: string; orderKey?: string; done?: boolean } = {};
     if (typeof body.text === "string") updates.text = clampLength(body.text, LIMITS.CARD_TEXT_MAX_LENGTH);
     if (typeof body.column === "string") {
       const retro = await prisma.retro.findUnique({
@@ -57,6 +58,9 @@ export async function PATCH(
       if (col && validIds.has(col)) updates.column = col;
     }
     if (typeof body.orderKey === "string") updates.orderKey = body.orderKey;
+    if (typeof body.done === "boolean" && card.column === ACTIONS_COLUMN_ID) {
+      updates.done = body.done;
+    }
     if (typeof body.newIndex === "number") {
       const siblings = await prisma.card.findMany({
         where: { retroId: card.retroId, column: card.column },
@@ -67,7 +71,13 @@ export async function PATCH(
       if (idx === -1) return NextResponse.json({ error: "Card not in list" }, { status: 400 });
       const newIdx = Math.max(0, Math.min(body.newIndex, siblings.length - 1));
       if (newIdx === idx) {
-        return NextResponse.json({ id: card.id, column: card.column, text: card.text, orderKey: card.orderKey });
+        return NextResponse.json({
+          id: card.id,
+          column: card.column,
+          text: card.text,
+          orderKey: card.orderKey,
+          done: (card as { done?: boolean }).done ?? false,
+        });
       }
       const prev = siblings[newIdx - 1]?.orderKey ?? null;
       const next = siblings[newIdx]?.orderKey ?? siblings[newIdx - 1]?.orderKey ?? null;
@@ -80,6 +90,7 @@ export async function PATCH(
         column: card.column,
         text: card.text,
         orderKey: card.orderKey,
+        done: (card as { done?: boolean }).done ?? false,
       });
     }
     const updated = await prisma.card.update({
@@ -93,6 +104,7 @@ export async function PATCH(
       column: updated.column,
       text: updated.text,
       orderKey: updated.orderKey,
+      done: (updated as { done?: boolean }).done ?? false,
       createdAt: updated.createdAt.toISOString(),
       updatedAt: updated.updatedAt.toISOString(),
       voteCount: updated.votes.length,

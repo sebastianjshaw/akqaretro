@@ -12,17 +12,20 @@ interface RetroCardItemProps {
   voterId: string;
   votesRemaining: number;
   voteCountsHidden?: boolean;
+  isActionsColumn?: boolean;
   onRefetch: () => void;
   onVoteAddOptimistic: (cardId: string) => void;
   onVoteRemoveOptimistic: (cardId: string) => void;
 }
 
-function RetroCardItemInner({ card, voterId, votesRemaining, voteCountsHidden, onRefetch, onVoteAddOptimistic, onVoteRemoveOptimistic }: RetroCardItemProps) {
+function RetroCardItemInner({ card, voterId, votesRemaining, voteCountsHidden, isActionsColumn, onRefetch, onVoteAddOptimistic, onVoteRemoveOptimistic }: RetroCardItemProps) {
   const [text, setText] = useState(card.text);
   // Always start in view mode so other viewers never see an open text box; only the user who clicks Edit does
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [markingDone, setMarkingDone] = useState(false);
+  const done = card.done ?? false;
 
   const {
     attributes,
@@ -104,6 +107,21 @@ function RetroCardItemInner({ card, voterId, votesRemaining, voteCountsHidden, o
     }
   }, [card.id, card.userVotesOnCard, voterId, onRefetch, onVoteRemoveOptimistic]);
 
+  const handleDone = useCallback(async () => {
+    if (markingDone || done) return;
+    setMarkingDone(true);
+    try {
+      const res = await fetch(`/api/cards/${card.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ done: true }),
+      });
+      if (res.ok) onRefetch();
+    } finally {
+      setMarkingDone(false);
+    }
+  }, [card.id, done, markingDone, onRefetch]);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -119,7 +137,7 @@ function RetroCardItemInner({ card, voterId, votesRemaining, voteCountsHidden, o
         isMergeOver
           ? "akqaretro-card--merge-over ring-4 ring-[var(--akqa-dove)] ring-offset-2 dark:ring-offset-[#1a1a1a] border-2 border-dashed border-[var(--akqa-dove)] bg-[var(--akqa-dove)]/10 dark:bg-[var(--akqa-dove)]/20 shadow-lg"
           : "bg-[var(--akqa-white)] dark:bg-[#2a2a2a] border-[var(--akqa-border)]"
-      }`}
+      } ${done ? "akqaretro-card--done opacity-60" : ""}`}
     >
       <div ref={setMergeRef} className={`akqaretro-card__inner flex gap-1.5 p-1.5 ${isEditing ? "akqaretro-card__inner--editing" : ""}`}>
         {!isEditing && (
@@ -158,11 +176,16 @@ function RetroCardItemInner({ card, voterId, votesRemaining, voteCountsHidden, o
           ) : (
             /* Saved: show text, then actions + votes (votes only visible when saved) */
             <>
-              <div className="akqaretro-card__text text-xs text-[var(--foreground)] whitespace-pre-wrap break-words leading-tight">
+              <div className={`akqaretro-card__text text-xs text-[var(--foreground)] whitespace-pre-wrap break-words leading-tight ${done ? "line-through opacity-80" : ""}`}>
                 {card.text || "\u00a0"}
               </div>
               <div className="akqaretro-card__row flex items-center justify-between gap-1 flex-wrap">
                 <div className="akqaretro-card__actions flex items-center gap-0.5">
+                  {isActionsColumn && !done && (
+                    <button type="button" onClick={handleDone} disabled={markingDone} aria-label="Mark as done" className="akqaretro-card__done flex items-center justify-center w-6 h-6 border border-[var(--akqa-dove)] bg-[var(--akqa-dove)] text-[var(--akqa-white)] hover:opacity-90 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)] disabled:opacity-50 text-xs font-medium">
+                      {markingDone ? "…" : "Done"}
+                    </button>
+                  )}
                   <button type="button" onClick={() => setIsEditing(true)} aria-label="Edit" className="akqaretro-card__edit flex items-center justify-center w-6 h-6 border border-[var(--akqa-border)] text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)] hover:bg-[var(--akqa-border)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)]">
                     <PencilIcon />
                   </button>

@@ -5,6 +5,7 @@ import { getVoterId } from "@/lib/voterId";
 import type { RetroState, RetroCard, ColumnConfigItem } from "@/types/retro";
 import { ACTIONS_COLUMN_ID, ensureActionsLast } from "@/types/retro";
 import { RetroColumn } from "./RetroColumn";
+import { SnapshotsModal } from "./SnapshotsModal";
 
 const POLL_INTERVAL_MS = 1500;
 
@@ -18,6 +19,8 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
   const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState("");
   const [columnSortMode, setColumnSortMode] = useState<Record<string, "votes" | "order">>({});
+  const [snapshotsOpen, setSnapshotsOpen] = useState(false);
+  const [snapshotting, setSnapshotting] = useState(false);
   const voterIdRef = useRef<string | undefined>(undefined);
   if (voterIdRef.current === undefined) voterIdRef.current = getVoterId();
   const voterId = voterIdRef.current;
@@ -153,11 +156,23 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
         (acc, col) => {
           const columnCards = cards.filter((c) => c.column === col.id);
           const mode = columnSortMode[col.id] ?? "votes";
+          const isActions = col.id === ACTIONS_COLUMN_ID;
+          const doneSort = (a: RetroCard, b: RetroCard) => ((a.done ? 1 : 0) - (b.done ? 1 : 0));
           acc[col.id] =
             mode === "order"
-              ? [...columnCards].sort((a, b) => (a.orderKey < b.orderKey ? -1 : 1))
+              ? [...columnCards].sort((a, b) => {
+                  if (isActions) {
+                    const d = doneSort(a, b);
+                    if (d !== 0) return d;
+                  }
+                  return a.orderKey < b.orderKey ? -1 : 1;
+                })
               : [...columnCards].sort((a, b) => {
                   if (b.voteCount !== a.voteCount) return b.voteCount - a.voteCount;
+                  if (isActions) {
+                    const d = doneSort(a, b);
+                    if (d !== 0) return d;
+                  }
                   return a.orderKey < b.orderKey ? -1 : 1;
                 });
           return acc;
@@ -244,6 +259,43 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
               </label>
             </div>
           )}
+          {data.isOwner && (
+            <>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (snapshotting || !data) return;
+                  setSnapshotting(true);
+                  try {
+                    const url = voterId ? `/api/retros/${token}/snapshots?creatorId=${encodeURIComponent(voterId)}` : `/api/retros/${token}/snapshots`;
+                    const res = await fetch(url, { method: "POST", credentials: "include" });
+                    if (!res.ok) {
+                      const j = await res.json().catch(() => ({}));
+                      window.alert(j.error ?? "Failed to create snapshot");
+                      return;
+                    }
+                    const j = await res.json();
+                    if (j.newRetroToken) window.location.href = `/r/${j.newRetroToken}`;
+                  } finally {
+                    setSnapshotting(false);
+                  }
+                }}
+                disabled={snapshotting}
+                className="akqaretro-board__snapshot text-sm border border-[var(--akqa-dove)] bg-[var(--akqa-dove)] text-[var(--akqa-white)] px-3 py-2 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] disabled:opacity-50"
+                aria-label="Save snapshot and start new board"
+              >
+                {snapshotting ? "…" : "Snapshot"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSnapshotsOpen(true)}
+                className="akqaretro-board__snapshots-menu text-sm text-[var(--akqa-muted)] hover:text-[var(--foreground)] border border-[var(--akqa-border)] bg-transparent px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"
+                aria-label="View snapshots"
+              >
+                View snapshots
+              </button>
+            </>
+          )}
           <button
             type="button"
             onClick={handleAddColumn}
@@ -269,6 +321,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
             columnId={col.id}
             columnTitle={col.title}
             isFixed={Boolean(col.fixed)}
+            isActionsColumn={col.id === ACTIONS_COLUMN_ID}
             cards={cardsByColumn[col.id] ?? []}
             sortMode={columnSortMode[col.id] ?? "votes"}
             onSortModeChange={handleColumnSortModeChange}
@@ -285,6 +338,12 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
           />
         ))}
       </div>
+      <SnapshotsModal
+        token={token}
+        voterId={voterId}
+        isOpen={snapshotsOpen}
+        onClose={() => setSnapshotsOpen(false)}
+      />
     </div>
   );
 }
