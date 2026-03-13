@@ -66,10 +66,9 @@ export function SnapshotsModal({ token, voterId, isOpen, onClose }: SnapshotsMod
 
   const formatDate = (iso: string) => {
     const d = new Date(iso);
-    return d.toLocaleDateString(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
+    const dateStr = d.toLocaleDateString(undefined, { dateStyle: "medium" });
+    const timeStr = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    return `${dateStr}, ${timeStr}`;
   };
 
   return (
