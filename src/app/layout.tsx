@@ -32,11 +32,12 @@ export default function RootLayout({
         <a href="#akqaretro-main" className="akqaretro-skip-link fixed left-[-9999px] top-4 z-[100] bg-[var(--akqa-dove)] text-[var(--akqa-white)] px-4 py-2 text-sm focus:left-4 focus:top-4">
           Skip to content
         </a>
-        <div className="akqaretro-layout-header flex w-full max-w-7xl mx-auto px-4 items-center">
-          <div className="akqaretro-layout-header__logo flex-1 flex justify-center min-w-0">
+        <div className="akqaretro-layout-header grid grid-cols-[1fr_auto_1fr] w-full max-w-7xl mx-auto px-4 items-center gap-4">
+          <div className="akqaretro-layout-header__left min-w-0" aria-hidden />
+          <div className="akqaretro-layout-header__logo flex justify-center">
             <AKQALogo />
           </div>
-          <div className="akqaretro-layout-header__theme flex-1 flex justify-end shrink-0">
+          <div className="akqaretro-layout-header__theme flex justify-end">
             <ThemeToggle />
           </div>
         </div>
