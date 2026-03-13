@@ -113,9 +113,13 @@ function RetroCardItemInner({ card, voterId, votesRemaining, voteCountsHidden, o
     <div
       ref={setSortableRef}
       style={style}
-      className={`akqaretro-card group mb-1.5 border bg-[var(--akqa-white)] dark:bg-[#2a2a2a] shadow-sm transition-shadow ${
+      className={`akqaretro-card group mb-1.5 border shadow-sm transition-all duration-150 ${
         isDragging ? "akqaretro-card--dragging opacity-80 shadow-md z-10" : ""
-      } ${isMergeOver ? "akqaretro-card--merge-over ring-2 ring-[var(--akqa-dove)] ring-offset-2 dark:ring-offset-[#1a1a1a]" : ""} border-[var(--akqa-border)]`}
+      } ${
+        isMergeOver
+          ? "akqaretro-card--merge-over ring-4 ring-[var(--akqa-dove)] ring-offset-2 dark:ring-offset-[#1a1a1a] border-2 border-dashed border-[var(--akqa-dove)] bg-[var(--akqa-dove)]/10 dark:bg-[var(--akqa-dove)]/20 shadow-lg"
+          : "bg-[var(--akqa-white)] dark:bg-[#2a2a2a] border-[var(--akqa-border)]"
+      }`}
     >
       <div ref={setMergeRef} className={`akqaretro-card__inner flex gap-1.5 p-1.5 ${isEditing ? "akqaretro-card__inner--editing" : ""}`}>
         {!isEditing && (
@@ -175,6 +179,11 @@ function RetroCardItemInner({ card, voterId, votesRemaining, voteCountsHidden, o
                   <button type="button" onClick={handleVoteAdd} disabled={votesRemaining <= 0} aria-label="Add one vote" className="akqaretro-card__vote-plus flex items-center justify-center w-5 h-5 border border-[var(--akqa-border)] text-[var(--akqa-dove)] dark:text-[var(--akqa-white)] hover:bg-[var(--akqa-border)] disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)] text-xs leading-none">+</button>
                 </div>
               </div>
+              {isMergeOver && (
+                <p className="akqaretro-card__merge-hint mt-1.5 pt-1.5 border-t border-[var(--akqa-dove)]/30 text-[10px] font-medium uppercase tracking-wide text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)]">
+                  Drop here to merge
+                </p>
+              )}
             </>
           )}
         </div>

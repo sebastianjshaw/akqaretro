@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AKQALogo } from "@/components/retro/AKQALogo";
+import { ThemeToggle } from "@/components/retro/ThemeToggle";
 
 export const metadata: Metadata = {
   title: "Retrospective | AKQA",
@@ -8,18 +9,37 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, noarchive: true },
 };
 
+const THEME_SCRIPT = `
+(function() {
+  var theme = localStorage.getItem('akqaretro-theme');
+  var isDark = theme === 'dark' || (theme !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (isDark) document.documentElement.classList.add('dark');
+  else document.documentElement.classList.remove('dark');
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="antialiased">
         <a href="#akqaretro-main" className="akqaretro-skip-link fixed left-[-9999px] top-4 z-[100] bg-[var(--akqa-dove)] text-[var(--akqa-white)] px-4 py-2 text-sm focus:left-4 focus:top-4">
           Skip to content
         </a>
-        <AKQALogo />
+        <div className="akqaretro-layout-header flex w-full max-w-7xl mx-auto px-4 items-center">
+          <div className="akqaretro-layout-header__logo flex-1 flex justify-center min-w-0">
+            <AKQALogo />
+          </div>
+          <div className="akqaretro-layout-header__theme flex-1 flex justify-end shrink-0">
+            <ThemeToggle />
+          </div>
+        </div>
         <main id="akqaretro-main">{children}</main>
       </body>
     </html>
