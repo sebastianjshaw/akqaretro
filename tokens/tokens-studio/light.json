@@ -1,0 +1,48 @@
+{
+  "color": {
+    "background": {
+      "value": "#ffffff",
+      "type": "color"
+    },
+    "foreground": {
+      "value": "#000000",
+      "type": "color"
+    },
+    "akqa-dove": {
+      "value": "#666666",
+      "type": "color"
+    },
+    "akqa-dusty": {
+      "value": "#999999",
+      "type": "color"
+    },
+    "akqa-muted": {
+      "value": "#999999",
+      "type": "color"
+    },
+    "akqa-border": {
+      "value": "#e5e5e5",
+      "type": "color"
+    },
+    "akqa-white": {
+      "value": "#ffffff",
+      "type": "color"
+    },
+    "surface-elevated": {
+      "value": "#ffffff",
+      "type": "color"
+    },
+    "surface-input": {
+      "value": "#ffffff",
+      "type": "color"
+    },
+    "overlay-scrim": {
+      "value": "#80000000",
+      "type": "color"
+    },
+    "destructive": {
+      "value": "#dc2626",
+      "type": "color"
+    }
+  }
+}

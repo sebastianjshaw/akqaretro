@@ -1,0 +1,82 @@
+{
+  "$schema": "https://schemas.w3.org/design-tokens/2024-04-01/format.json",
+  "$description": "W3C Design Tokens format. Use with Style Dictionary, token-transformer, or CI pipelines.",
+  "akqa-retro": {
+    "color": {
+      "background": {
+        "$type": "color",
+        "$value": "#ffffff",
+        "$extensions": {
+          "mode": {
+            "dark": "#1a1a1a"
+          }
+        }
+      },
+      "foreground": {
+        "$type": "color",
+        "$value": "#000000",
+        "$extensions": {
+          "mode": {
+            "dark": "#ffffff"
+          }
+        }
+      },
+      "akqa-dove": {
+        "$type": "color",
+        "$value": "#666666"
+      },
+      "akqa-dusty": {
+        "$type": "color",
+        "$value": "#999999"
+      },
+      "akqa-muted": {
+        "$type": "color",
+        "$value": "#999999"
+      },
+      "akqa-border": {
+        "$type": "color",
+        "$value": "#e5e5e5",
+        "$extensions": {
+          "mode": {
+            "dark": "#404040"
+          }
+        }
+      },
+      "akqa-white": {
+        "$type": "color",
+        "$value": "#ffffff"
+      },
+      "surface-elevated": {
+        "$type": "color",
+        "$value": "#ffffff",
+        "$extensions": {
+          "mode": {
+            "dark": "#2a2a2a"
+          }
+        }
+      },
+      "surface-input": {
+        "$type": "color",
+        "$value": "#ffffff",
+        "$extensions": {
+          "mode": {
+            "dark": "#1a1a1a"
+          }
+        }
+      },
+      "overlay-scrim": {
+        "$type": "color",
+        "$value": "rgba(0, 0, 0, 0.5)"
+      },
+      "destructive": {
+        "$type": "color",
+        "$value": "#dc2626",
+        "$extensions": {
+          "mode": {
+            "dark": "#f87171"
+          }
+        }
+      }
+    }
+  }
+}

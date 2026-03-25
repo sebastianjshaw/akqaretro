@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "NOT for Figma native import. Use tokens/tokens-studio/light.json + dark.json in Tokens Studio plugin, or paste CSV manually. This file is for custom scripts only.",
+  "collection": "AKQA Retro / Theme",
+  "modes": ["Light", "Dark"],
+  "variables": [
+    {
+      "name": "color/background",
+      "resolvedType": "COLOR",
+      "values": { "Light": "#FFFFFF", "Dark": "#1A1A1A" },
+      "description": "Page background"
+    },
+    {
+      "name": "color/foreground",
+      "resolvedType": "COLOR",
+      "values": { "Light": "#000000", "Dark": "#FFFFFF" },
+      "description": "Primary text"
+    },
+    {
+      "name": "color/akqa-dove",
+      "resolvedType": "COLOR",
+      "values": { "Light": "#666666", "Dark": "#666666" },
+      "description": "Primary CTA accent"
+    },
+    {
+      "name": "color/akqa-dusty",
+      "resolvedType": "COLOR",
+      "values": { "Light": "#999999", "Dark": "#999999" },
+      "description": "Muted icons"
+    },
+    {
+      "name": "color/akqa-muted",
+      "resolvedType": "COLOR",
+      "values": { "Light": "#999999", "Dark": "#999999" },
+      "description": "Captions (alias dusty)"
+    },
+    {
+      "name": "color/akqa-border",
+      "resolvedType": "COLOR",
+      "values": { "Light": "#E5E5E5", "Dark": "#404040" },
+      "description": "Borders inputs"
+    },
+    {
+      "name": "color/akqa-white",
+      "resolvedType": "COLOR",
+      "values": { "Light": "#FFFFFF", "Dark": "#FFFFFF" },
+      "description": "White surfaces"
+    },
+    {
+      "name": "color/surface-elevated",
+      "resolvedType": "COLOR",
+      "values": { "Light": "#FFFFFF", "Dark": "#2A2A2A" },
+      "description": "Cards columns dark:bg"
+    },
+    {
+      "name": "color/surface-input",
+      "resolvedType": "COLOR",
+      "values": { "Light": "#FFFFFF", "Dark": "#1A1A1A" },
+      "description": "Textareas dark bg"
+    },
+    {
+      "name": "color/overlay-scrim",
+      "resolvedType": "COLOR",
+      "values": {
+        "Light": "rgba(0, 0, 0, 0.5)",
+        "Dark": "rgba(0, 0, 0, 0.5)"
+      },
+      "description": "Modal overlay"
+    },
+    {
+      "name": "color/destructive",
+      "resolvedType": "COLOR",
+      "values": { "Light": "#DC2626", "Dark": "#F87171" },
+      "description": "Delete hover"
+    }
+  ]
+}

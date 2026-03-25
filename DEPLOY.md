@@ -86,7 +86,8 @@ For local SQLite instead, switch `provider` in `prisma/schema.prisma` to `sqlite
 
 ## Debugging 500 on create retro
 
-1. **Vercel logs:** Project → **Logs** (or **Deployments** → latest → **Functions**). Reproduce the error, then check the server log for `POST /api/retros` — the real error and optional `code` (e.g. Prisma `P1001`) are logged there.
-2. **Env:** In Vercel → **Settings** → **Environment Variables**, confirm `DATABASE_URL` (and `DIRECT_URL`) are set for Production and that **Build** ran after adding them.
-3. **Migrations:** If the log says the table/relation does not exist, redeploy so the build runs `prisma migrate deploy` (it’s in the default build script). Ensure `DIRECT_URL` is set in Vercel—migrations use it.
-4. **Neon URL:** Connection string should include `?sslmode=require` (Neon usually adds this). If you see a connection/timeout error, re-copy the pooled URL from Neon and ensure no typo.
+1. **Health check:** Open `https://<your-vercel-domain>/api/health/db` in the browser. If `ok` is `false`, the app cannot reach Postgres from the server — fix `DATABASE_URL` / `DIRECT_URL` (and redeploy) before debugging further. The response includes safe flags (no secrets).
+2. **Vercel logs:** Project → **Logs** (or **Deployments** → latest → **Functions**). Reproduce the error, then check the server log for `POST /api/retros` — the real error and optional `code` (e.g. Prisma `P1001`) are logged there.
+3. **Env:** In Vercel → **Settings** → **Environment Variables**, confirm `DATABASE_URL` (and `DIRECT_URL`) are set for Production and that **Build** ran after adding them.
+4. **Migrations:** If the log says the table/relation does not exist, redeploy so the build runs `prisma migrate deploy` (it’s in the default build script). Ensure `DIRECT_URL` is set in Vercel—migrations use it.
+5. **Neon URL:** Connection string should include `?sslmode=require` (Neon usually adds this). If you see a connection/timeout error, re-copy the pooled URL from Neon and ensure no typo.

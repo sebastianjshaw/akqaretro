@@ -1,0 +1,12 @@
+token_path,variable_name,type,Light,Dark,notes
+color/background,background,COLOR,#FFFFFF,#1A1A1A,Page + main surface
+color/foreground,foreground,COLOR,#000000,#FFFFFF,Primary text
+color/akqa-dove,akqa-dove,COLOR,#666666,#666666,CTA fill links focus
+color/akqa-dusty,akqa-dusty,COLOR,#999999,#999999,Muted icons secondary
+color/akqa-muted,akqa-muted,COLOR,#999999,#999999,Same as dusty in app
+color/akqa-border,akqa-border,COLOR,#E5E5E5,#404040,Borders dividers inputs
+color/akqa-white,akqa-white,COLOR,#FFFFFF,#FFFFFF,Surfaces text on dove
+color/surface-elevated,surface-elevated,COLOR,#FFFFFF,#2A2A2A,Cards columns panels
+color/surface-input,surface-input,COLOR,#FFFFFF,#1A1A1A,Textareas inputs dark
+color/overlay-scrim,overlay-scrim,COLOR,#80000000,#80000000,Modal backdrop (8-digit hex = 50% black)
+color/destructive,destructive,COLOR,#DC2626,#F87171,Delete hover states

@@ -1,0 +1,98 @@
+{
+  "color": {
+    "background": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.101961, 0.101961, 0.101961],
+        "hex": "#1a1a1a"
+      }
+    },
+    "foreground": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [1, 1, 1],
+        "hex": "#ffffff"
+      }
+    },
+    "destructive": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.972549, 0.443137, 0.443137],
+        "hex": "#f87171"
+      }
+    },
+    "akqa": {
+      "dove": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.4, 0.4, 0.4],
+          "hex": "#666666"
+        }
+      },
+      "dusty": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.6, 0.6, 0.6],
+          "hex": "#999999"
+        }
+      },
+      "muted": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.6, 0.6, 0.6],
+          "hex": "#999999"
+        }
+      },
+      "border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.25098, 0.25098, 0.25098],
+          "hex": "#404040"
+        }
+      },
+      "white": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [1, 1, 1],
+          "hex": "#ffffff"
+        }
+      }
+    },
+    "surface": {
+      "elevated": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.164706, 0.164706, 0.164706],
+          "hex": "#2a2a2a"
+        }
+      },
+      "input": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.101961, 0.101961, 0.101961],
+          "hex": "#1a1a1a"
+        }
+      }
+    },
+    "overlay": {
+      "scrim": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0, 0, 0],
+          "hex": "#000000"
+        }
+      }
+    }
+  }
+}

@@ -25,11 +25,13 @@ export function HomeClient({ session }: HomeClientProps) {
   const [error, setError] = useState("");
   const [myRetros, setMyRetros] = useState<RetroSummary[]>([]);
   const [loadingList, setLoadingList] = useState(true);
+  const [listError, setListError] = useState("");
   const [deletingToken, setDeletingToken] = useState<string | null>(null);
   const creatorId = getVoterId();
 
   const fetchMyRetros = useCallback(async () => {
     setLoadingList(true);
+    setListError("");
     try {
       const params = new URLSearchParams();
       if (creatorId) params.set("creatorId", creatorId);
@@ -51,6 +53,8 @@ export function HomeClient({ session }: HomeClientProps) {
         }
         return;
       }
+      const errJson = await res.json().catch(() => ({}));
+      const msg = typeof errJson.error === "string" ? errJson.error : "";
       // 400 = no session and no creatorId; fall back to device-only list when not signed in
       if (res.status === 400 && creatorId) {
         const resDevice = await fetch(
@@ -62,9 +66,15 @@ export function HomeClient({ session }: HomeClientProps) {
           setMyRetros(Array.isArray(data) ? data : []);
           return;
         }
+        const devErr = await resDevice.json().catch(() => ({}));
+        setListError(typeof devErr.error === "string" ? devErr.error : msg || "Could not load your retros.");
+        setMyRetros([]);
+        return;
       }
+      setListError(msg || "Could not load your retros.");
       setMyRetros([]);
     } catch {
+      setListError("Network error loading retros.");
       setMyRetros([]);
     } finally {
       setLoadingList(false);
@@ -232,6 +242,20 @@ export function HomeClient({ session }: HomeClientProps) {
           </div>
           {loadingList ? (
             <p className="akqaretro-landing__my-retros-loading akqaretro-caption text-[var(--akqa-muted)]">Loading…</p>
+          ) : listError ? (
+            <div className="akqaretro-landing__my-retros-error flex flex-col gap-2">
+              <p className="akqaretro-landing__my-retros-error-text text-sm text-red-600 dark:text-red-400" role="alert">
+                {listError}
+              </p>
+              <p className="akqaretro-landing__my-retros-error-hint akqaretro-caption text-[var(--akqa-muted)]">
+                Data is stored on the server (Neon). This usually means the database is unreachable from production — check Vercel env vars{" "}
+                <code className="text-xs">DATABASE_URL</code> / <code className="text-xs">DIRECT_URL</code> and open{" "}
+                <a href="/api/health/db" className="underline text-[var(--akqa-dove)]">
+                  /api/health/db
+                </a>{" "}
+                to test the connection.
+              </p>
+            </div>
           ) : myRetros.length === 0 ? (
             <p className="akqaretro-landing__my-retros-empty akqaretro-caption text-[var(--akqa-muted)]">
               {session ? "Retros you create while signed in will appear here." : "Retros you create on this device will appear here."}

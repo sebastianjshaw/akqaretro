@@ -1,0 +1,98 @@
+{
+  "color": {
+    "background": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [1, 1, 1],
+        "hex": "#ffffff"
+      }
+    },
+    "foreground": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0, 0, 0],
+        "hex": "#000000"
+      }
+    },
+    "destructive": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.862745, 0.14902, 0.14902],
+        "hex": "#dc2626"
+      }
+    },
+    "akqa": {
+      "dove": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.4, 0.4, 0.4],
+          "hex": "#666666"
+        }
+      },
+      "dusty": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.6, 0.6, 0.6],
+          "hex": "#999999"
+        }
+      },
+      "muted": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.6, 0.6, 0.6],
+          "hex": "#999999"
+        }
+      },
+      "border": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.898039, 0.898039, 0.898039],
+          "hex": "#e5e5e5"
+        }
+      },
+      "white": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [1, 1, 1],
+          "hex": "#ffffff"
+        }
+      }
+    },
+    "surface": {
+      "elevated": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [1, 1, 1],
+          "hex": "#ffffff"
+        }
+      },
+      "input": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [1, 1, 1],
+          "hex": "#ffffff"
+        }
+      }
+    },
+    "overlay": {
+      "scrim": {
+        "$type": "color",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0, 0, 0],
+          "hex": "#000000"
+        }
+      }
+    }
+  }
+}

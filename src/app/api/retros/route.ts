@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { publicMessageForPrismaError } from "@/lib/prismaErrors";
 import { generateRetroToken } from "@/lib/token";
 import { LIMITS, clampLength } from "@/lib/validation";
 import { safeParseJson } from "@/lib/safeJson";
@@ -74,7 +75,10 @@ export async function GET(request: NextRequest) {
     );
   } catch (e) {
     console.error("GET /api/retros", e);
-    return NextResponse.json({ error: "Failed to list retros" }, { status: 500 });
+    return NextResponse.json(
+      { error: publicMessageForPrismaError(e) },
+      { status: 500 }
+    );
   }
 }
 
@@ -110,11 +114,16 @@ export async function POST(request: NextRequest) {
     });
   } catch (e) {
     const err = e instanceof Error ? e : new Error(String(e));
-    // Log full error for Vercel (Functions → Logs); safe for prod (not sent to client)
     console.error("POST /api/retros", err.message, err.stack);
     if ("code" in err) console.error("POST /api/retros code", (err as { code?: string }).code);
+    const publicMsg = publicMessageForPrismaError(e);
     return NextResponse.json(
-      { error: process.env.NODE_ENV === "development" ? err.message : "Failed to create retro" },
+      {
+        error:
+          process.env.NODE_ENV === "development"
+            ? `${publicMsg} (${err.message})`
+            : publicMsg,
+      },
       { status: 500 }
     );
   }
