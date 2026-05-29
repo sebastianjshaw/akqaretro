@@ -36,7 +36,11 @@
   --background: var(--akqa-white);
   --foreground: var(--akqa-black);
   --akqa-border: #e5e5e5;
-  --akqa-muted: var(--akqa-dusty);
+  /* #666 ≈ 5.7:1 on white — WCAG AA for caption-sized text (dusty #999 fails AA) */
+  --akqa-muted: #666666;
+  --akqa-error: #dc2626;
+  --surface-elevated: var(--akqa-white);
+  --surface-input: var(--akqa-white);
   --font-season-mix: "Season Mix", serif;
   --font-season-sans: "Season Sans", system-ui, sans-serif;
   --font-season-serif: "Season Serif", Georgia, serif;
@@ -48,7 +52,11 @@ html.dark {
   --background: #1a1a1a;
   --foreground: var(--akqa-white);
   --akqa-border: #404040;
-  --akqa-muted: var(--akqa-dusty);
+  /* #a3a3a3 ≈ 4.6:1 on #1a1a1a background */
+  --akqa-muted: #a3a3a3;
+  --akqa-error: #f87171;
+  --surface-elevated: #2a2a2a;
+  --surface-input: #1a1a1a;
 }
 
 @theme inline {
@@ -77,6 +85,65 @@ body {
 /* Sharp edges on brand – override rounded utilities where used */
 .akqaretro-sharp {
   border-radius: 0;
+}
+
+/* WCAG 2.5.8 — minimum 44×44px touch targets on mobile */
+.akqaretro-touch-target {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+}
+
+/* Semantic error text — light and dark variants */
+.akqaretro-text-error {
+  color: var(--akqa-error);
+}
+
+/* Visually hidden — available to screen readers */
+.akqaretro-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Retro board columns: stack on mobile, horizontal scroll on md+ when many columns */
+.akqaretro-board__columns-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.akqaretro-board__columns {
+  display: grid;
+  gap: 1.5rem;
+  min-width: 0;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .akqaretro-board__columns {
+    grid-template-columns: repeat(var(--akqaretro-col-count, 3), minmax(280px, 1fr));
+    min-width: min(100%, calc(var(--akqaretro-col-count, 3) * 280px));
+  }
+}
+
+.akqaretro-snapshots-detail {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .akqaretro-snapshots-detail {
+    grid-template-columns: repeat(var(--akqaretro-col-count, 3), minmax(0, 1fr));
+  }
 }
 
 /* Respect user motion preference (accessibility) */

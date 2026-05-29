@@ -17,10 +17,13 @@ export function RetroShareLink({ token }: { token: string }) {
   return (
     <div className="akqaretro-share mt-6 flex flex-wrap items-center gap-2 akqaretro-caption text-[var(--akqa-muted)]">
       <span className="akqaretro-share__label">Share link:</span>
+      <span className="akqaretro-share__status akqaretro-sr-only" aria-live="polite" aria-atomic="true">
+        {copied ? "Link copied to clipboard" : ""}
+      </span>
       <button
         type="button"
         onClick={copy}
-        className="akqaretro-share__copy border border-[var(--akqa-border)] px-3 py-1.5 hover:bg-[var(--akqa-border)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] focus-visible:ring-offset-2"
+        className="akqaretro-share__copy akqaretro-touch-target border border-[var(--akqa-border)] px-3 py-1.5 hover:bg-[var(--akqa-border)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] focus-visible:ring-offset-2"
         aria-label={copied ? "Copied to clipboard" : "Copy link"}
       >
         {copied ? "Copied!" : "Copy"}

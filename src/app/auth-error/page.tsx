@@ -22,7 +22,7 @@ export default async function AuthErrorPage({
 
   return (
     <div className="akqaretro-auth-error min-h-screen bg-[var(--background)] flex flex-col items-center justify-center p-6">
-      <div className="akqaretro-auth-error__box border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] p-8 max-w-md text-center">
+      <div className="akqaretro-auth-error__box border border-[var(--akqa-border)] bg-[var(--surface-elevated)] p-8 max-w-md text-center">
         <h1 className="akqaretro-headline text-lg font-normal text-[var(--foreground)] mb-2">
           Sign-in error
         </h1>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
+import { debugApiForbidden, isDebugApiEnabled } from "@/lib/debugAccess";
 
 /**
  * GET /api/auth/session-check
@@ -11,6 +12,7 @@ import { prisma } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  if (!isDebugApiEnabled()) return debugApiForbidden();
   const session = await auth();
   const hasSession = !!session;
   const hasUserId = !!(session?.user as { id?: string } | undefined)?.id;

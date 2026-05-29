@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getConfig } from "@/auth";
+import { debugApiForbidden, isDebugApiEnabled } from "@/lib/debugAccess";
 
 function isValidHttpUrl(url: string, baseUrl: string): boolean {
   try {
@@ -18,6 +19,7 @@ function isValidHttpUrl(url: string, baseUrl: string): boolean {
  * Remove or restrict in production once fixed.
  */
 export async function GET(request: Request) {
+  if (!isDebugApiEnabled()) return debugApiForbidden();
   const config = getConfig();
   const url = new URL(request.url);
   const origin = url.origin;

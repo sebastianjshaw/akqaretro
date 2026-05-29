@@ -85,61 +85,72 @@ export async function POST(
     }));
 
     const lineageId = (retro as { lineageId?: string | null }).lineageId ?? retro.id;
-
-    const snapshot = await prisma.snapshot.create({
-      data: {
-        lineageId,
-        sourceRetroId: retro.id,
-        columnConfig: columnConfig as object,
-        cards: cardsPayload as object,
-      },
-    });
-
+    const actionCards = retro.cards.filter((c) => c.column === ACTIONS_COLUMN_ID);
     const newToken = generateRetroToken();
     const newDate = new Date().toISOString().slice(0, 10);
-    const newRetro = await prisma.retro.create({
-      data: {
-        token: newToken,
-        title: retro.title,
-        date: newDate,
-        userId: retro.userId,
-        creatorId: retro.creatorId,
-        columnConfig: columnConfig as object,
-        hideCardsFromNonOwners: (retro as { hideCardsFromNonOwners?: boolean }).hideCardsFromNonOwners ?? false,
-        hideVoteCounts: (retro as { hideVoteCounts?: boolean }).hideVoteCounts ?? false,
-        lineageId,
-      },
-    });
 
-    const actionCards = retro.cards.filter((c) => c.column === ACTIONS_COLUMN_ID);
-    for (let i = 0; i < actionCards.length; i++) {
-      const c = actionCards[i];
-      const orderKey = nextOrderKey(i === 0 ? null : actionCards[i - 1].orderKey);
-      await prisma.card.create({
+    const txResult = await prisma.$transaction(async (tx) => {
+      const snapshot = await tx.snapshot.create({
         data: {
-          retroId: newRetro.id,
-          column: ACTIONS_COLUMN_ID,
-          text: c.text,
-          orderKey,
-          creatorId: c.creatorId,
-          userId: c.userId,
-          done: (c as { done?: boolean }).done ?? false,
+          lineageId,
+          sourceRetroId: retro.id,
+          columnConfig: columnConfig as object,
+          cards: cardsPayload as object,
         },
       });
-    }
 
-    await prisma.snapshot.update({
-      where: { id: snapshot.id },
-      data: { resultRetroId: newRetro.id },
+      const newRetro = await tx.retro.create({
+        data: {
+          token: newToken,
+          title: retro.title,
+          date: newDate,
+          userId: retro.userId,
+          creatorId: retro.creatorId,
+          columnConfig: columnConfig as object,
+          hideCardsFromNonOwners:
+            (retro as { hideCardsFromNonOwners?: boolean }).hideCardsFromNonOwners ?? false,
+          hideVoteCounts: (retro as { hideVoteCounts?: boolean }).hideVoteCounts ?? false,
+          lineageId,
+        },
+      });
+
+      let prevOrderKey: string | null = null;
+      for (const c of actionCards) {
+        const orderKey = nextOrderKey(prevOrderKey);
+        prevOrderKey = orderKey;
+        await tx.card.create({
+          data: {
+            retroId: newRetro.id,
+            column: ACTIONS_COLUMN_ID,
+            text: c.text,
+            orderKey,
+            creatorId: c.creatorId,
+            userId: c.userId,
+            done: (c as { done?: boolean }).done ?? false,
+          },
+        });
+      }
+
+      await tx.snapshot.update({
+        where: { id: snapshot.id },
+        data: { resultRetroId: newRetro.id },
+      });
+
+      return {
+        snapshotId: snapshot.id,
+        newRetroToken: newRetro.token,
+        newRetroId: newRetro.id,
+        creatorId: newRetro.creatorId,
+      };
     });
 
     const response = NextResponse.json({
-      snapshotId: snapshot.id,
-      newRetroToken: newRetro.token,
-      newRetroId: newRetro.id,
+      snapshotId: txResult.snapshotId,
+      newRetroToken: txResult.newRetroToken,
+      newRetroId: txResult.newRetroId,
     });
-    if (newRetro.creatorId) {
-      appendOwnerCookie(response, newRetro.token, newRetro.creatorId);
+    if (txResult.creatorId) {
+      appendOwnerCookie(response, txResult.newRetroToken, txResult.creatorId);
     }
     return response;
   } catch (e) {

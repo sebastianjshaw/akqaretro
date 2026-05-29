@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { LIMITS } from "@/lib/validation";
 import { safeParseJson } from "@/lib/safeJson";
+import { assertCardRetroAccess, parseRetroToken } from "@/lib/retroAccess";
 
 const VOTES_PER_USER = 6;
 
@@ -16,36 +18,51 @@ export async function POST(
 ) {
   try {
     const { cardId } = await params;
-    const body = await safeParseJson<{ voterId?: string }>(request);
+    const body = await safeParseJson<{ voterId?: string; retroToken?: string }>(request);
     const voterId = body ? validateVoterId(String(body.voterId ?? "")) : null;
     if (!voterId) {
       return NextResponse.json({ error: "voterId is required" }, { status: 400 });
     }
+    const retroToken = parseRetroToken(request, body);
     const card = await prisma.card.findUnique({ where: { id: cardId } });
     if (!card) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
-    const userVoteCount = await prisma.vote.count({
-      where: { retroId: card.retroId, voterId },
-    });
-    if (userVoteCount >= VOTES_PER_USER) {
+    const access = await assertCardRetroAccess(card, retroToken);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
+    }
+
+    const result = await prisma.$transaction(
+      async (tx) => {
+        const userVoteCount = await tx.vote.count({
+          where: { retroId: card.retroId, voterId },
+        });
+        if (userVoteCount >= VOTES_PER_USER) {
+          return { capped: true as const, userVoteCount };
+        }
+        await tx.vote.create({
+          data: { retroId: card.retroId, cardId, voterId },
+        });
+        const voteCount = await tx.vote.count({ where: { cardId } });
+        const userVotesOnCard = await tx.vote.count({ where: { cardId, voterId } });
+        const votesRemaining = Math.max(0, VOTES_PER_USER - userVoteCount - 1);
+        return { capped: false as const, voteCount, userVotesOnCard, votesRemaining };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
+
+    if (result.capped) {
       return NextResponse.json(
         { error: "Maximum votes per retro reached", votesRemaining: 0 },
         { status: 400 }
       );
     }
-    await prisma.vote.create({
-      data: { retroId: card.retroId, cardId, voterId },
-    });
-    const voteCount = await prisma.vote.count({ where: { cardId } });
-    const userVotesOnCard = await prisma.vote.count({
-      where: { cardId, voterId },
-    });
-    const votesRemaining = Math.max(0, VOTES_PER_USER - userVoteCount - 1);
+
     return NextResponse.json({
-      voteCount,
-      votesRemaining,
-      userVotesOnCard,
+      voteCount: result.voteCount,
+      votesRemaining: result.votesRemaining,
+      userVotesOnCard: result.userVotesOnCard,
     });
   } catch (e) {
     console.error("POST /api/cards/[cardId]/vote", e);
@@ -64,6 +81,16 @@ export async function DELETE(
     if (!voterId) {
       return NextResponse.json({ error: "voterId is required" }, { status: 400 });
     }
+    const retroToken = parseRetroToken(request);
+    const card = await prisma.card.findUnique({ where: { id: cardId } });
+    if (!card) {
+      return NextResponse.json({ error: "Card not found" }, { status: 404 });
+    }
+    const access = await assertCardRetroAccess(card, retroToken);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
+    }
+
     const voteToRemove = await prisma.vote.findFirst({
       where: { cardId, voterId },
       orderBy: { createdAt: "desc" },

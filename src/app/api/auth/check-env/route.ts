@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 
+import { debugApiForbidden, isDebugApiEnabled } from "@/lib/debugAccess";
+
 /**
  * GET /api/auth/check-env
  * Returns whether auth-related env vars are present at runtime (values never exposed).
  * Use in production to confirm Vercel is injecting AUTH_SECRET etc.
  */
 export async function GET() {
+  if (!isDebugApiEnabled()) return debugApiForbidden();
   const secret =
     (typeof process.env.AUTH_SECRET === "string" && process.env.AUTH_SECRET.trim().length > 0) ||
     (typeof process.env.NEXTAUTH_SECRET === "string" && process.env.NEXTAUTH_SECRET.trim().length > 0);

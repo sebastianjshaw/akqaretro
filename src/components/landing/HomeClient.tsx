@@ -176,7 +176,7 @@ export function HomeClient({ session }: HomeClientProps) {
           )}
         </div>
 
-        <section className="akqaretro-landing__create border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] shadow-lg p-8" aria-labelledby="akqaretro-create-heading">
+        <section className="akqaretro-landing__create border border-[var(--akqa-border)] bg-[var(--surface-elevated)] shadow-lg p-8" aria-labelledby="akqaretro-create-heading">
           <h1 id="akqaretro-create-heading" className="akqaretro-landing__title akqaretro-headline text-2xl font-normal text-[var(--foreground)] mb-2 tracking-wide">
             New retrospective
           </h1>
@@ -193,7 +193,7 @@ export function HomeClient({ session }: HomeClientProps) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Sprint 42 Retro"
-              className="akqaretro-landing__input w-full border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#1a1a1a] text-[var(--foreground)] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--akqa-dove)]"
+              className="akqaretro-landing__input w-full border border-[var(--akqa-border)] bg-[var(--surface-input)] text-[var(--foreground)] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--akqa-dove)]"
               required
             />
             <label htmlFor="akqaretro-date" className="akqaretro-landing__label text-sm text-[var(--foreground)]">
@@ -204,10 +204,10 @@ export function HomeClient({ session }: HomeClientProps) {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="akqaretro-landing__input w-full border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#1a1a1a] text-[var(--foreground)] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--akqa-dove)]"
+              className="akqaretro-landing__input w-full border border-[var(--akqa-border)] bg-[var(--surface-input)] text-[var(--foreground)] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--akqa-dove)]"
             />
             {error && (
-              <p className="akqaretro-landing__error text-sm text-red-600 dark:text-red-400" role="alert">
+              <p className="akqaretro-landing__error text-sm akqaretro-text-error" role="alert">
                 {error}
               </p>
             )}
@@ -223,7 +223,7 @@ export function HomeClient({ session }: HomeClientProps) {
           </form>
         </section>
 
-        <section className="akqaretro-landing__my-retros border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] p-6" aria-labelledby="akqaretro-my-retros-heading">
+        <section className="akqaretro-landing__my-retros border border-[var(--akqa-border)] bg-[var(--surface-elevated)] p-6" aria-labelledby="akqaretro-my-retros-heading">
           <div className="akqaretro-landing__my-retros-header flex items-center justify-between gap-2 mb-3">
             <h2 id="akqaretro-my-retros-heading" className="akqaretro-landing__my-retros-title akqaretro-headline text-lg font-normal text-[var(--foreground)] tracking-wide">
               My retros
@@ -233,7 +233,7 @@ export function HomeClient({ session }: HomeClientProps) {
               onClick={() => fetchMyRetros()}
               disabled={loadingList}
               aria-label="Refresh list"
-              className="akqaretro-landing__my-retros-refresh text-sm text-[var(--akqa-muted)] hover:text-[var(--foreground)] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] px-2 py-1 rounded border-0 bg-transparent cursor-pointer"
+              className="akqaretro-landing__my-retros-refresh akqaretro-sharp text-sm text-[var(--akqa-muted)] hover:text-[var(--foreground)] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] px-2 py-1 border-0 bg-transparent cursor-pointer"
             >
               {loadingList ? "…" : "Refresh"}
             </button>
@@ -242,7 +242,7 @@ export function HomeClient({ session }: HomeClientProps) {
             <p className="akqaretro-landing__my-retros-loading akqaretro-caption text-[var(--akqa-muted)]">Loading…</p>
           ) : listError ? (
             <div className="akqaretro-landing__my-retros-error flex flex-col gap-2">
-              <p className="akqaretro-landing__my-retros-error-text text-sm text-red-600 dark:text-red-400" role="alert">
+              <p className="akqaretro-landing__my-retros-error-text text-sm akqaretro-text-error" role="alert">
                 {listError}
               </p>
               <p className="akqaretro-landing__my-retros-error-hint akqaretro-caption text-[var(--akqa-muted)]">
@@ -274,7 +274,7 @@ export function HomeClient({ session }: HomeClientProps) {
                     onClick={(e) => handleDeleteRetro(e, retro)}
                     disabled={deletingToken === retro.token}
                     aria-label={`Delete ${retro.title}`}
-                    className="akqaretro-landing__my-retros-delete shrink-0 text-sm text-[var(--akqa-muted)] hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] px-2 py-1 rounded border-0 bg-transparent cursor-pointer"
+                    className="akqaretro-landing__my-retros-delete akqaretro-sharp shrink-0 text-sm text-[var(--akqa-muted)] hover:text-[var(--akqa-error)] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] px-2 py-1 border-0 bg-transparent cursor-pointer"
                   >
                     {deletingToken === retro.token ? "…" : "Delete"}
                   </button>

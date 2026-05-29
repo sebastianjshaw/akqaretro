@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getVoterId } from "@/lib/voterId";
+import { retroStateFingerprint } from "@/lib/retroStateKey";
 import type { RetroState, RetroCard, ColumnConfigItem } from "@/types/retro";
 import { ACTIONS_COLUMN_ID, ensureActionsLast } from "@/types/retro";
 import { RetroColumn } from "./RetroColumn";
 import { SnapshotsModal } from "./SnapshotsModal";
 
-const POLL_INTERVAL_MS = 1500;
+const POLL_INTERVAL_MS = 4000;
 
 interface RetroBoardProps {
   token: string;
@@ -21,9 +22,22 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
   const [columnSortMode, setColumnSortMode] = useState<Record<string, "votes" | "order">>({});
   const [snapshotsOpen, setSnapshotsOpen] = useState(false);
   const [snapshotting, setSnapshotting] = useState(false);
+  const [pollPaused, setPollPaused] = useState(false);
   const voterIdRef = useRef<string | undefined>(undefined);
+  const fingerprintRef = useRef<string | null>(
+    initial ? retroStateFingerprint(initial) : null
+  );
+  const editingCountRef = useRef(0);
+  const snapshotsTriggerRef = useRef<HTMLButtonElement>(null);
   if (voterIdRef.current === undefined) voterIdRef.current = getVoterId();
   const voterId = voterIdRef.current;
+
+  const applyRetroState = useCallback((next: RetroState) => {
+    const fp = retroStateFingerprint(next);
+    if (fp === fingerprintRef.current) return;
+    fingerprintRef.current = fp;
+    setData(next);
+  }, []);
 
   const fetchRetro = useCallback(
     async (signal?: AbortSignal) => {
@@ -36,8 +50,8 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
           if (res.status === 404) setError("Retro not found");
           return;
         }
-        const json = await res.json();
-        setData(json);
+        const json = (await res.json()) as RetroState;
+        applyRetroState(json);
         setError("");
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
@@ -46,7 +60,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
         setLoading(false);
       }
     },
-    [token, voterId]
+    [token, voterId, applyRetroState]
   );
 
   useEffect(() => {
@@ -56,20 +70,20 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
   }, [fetchRetro]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || pollPaused) return;
     const ac = new AbortController();
     const t = setInterval(() => fetchRetro(ac.signal), POLL_INTERVAL_MS);
     return () => {
       clearInterval(t);
       ac.abort();
     };
-  }, [token, fetchRetro]);
+  }, [token, fetchRetro, pollPaused]);
 
   useEffect(() => {
     if (!token) return;
     let ac: AbortController | null = null;
     const onVisibility = () => {
-      if (document.visibilityState === "visible") {
+      if (document.visibilityState === "visible" && !pollPaused) {
         ac = new AbortController();
         fetchRetro(ac.signal);
       }
@@ -79,11 +93,16 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
       document.removeEventListener("visibilitychange", onVisibility);
       ac?.abort();
     };
-  }, [token, fetchRetro]);
+  }, [token, fetchRetro, pollPaused]);
 
   const refetch = useCallback(() => {
     fetchRetro();
   }, [fetchRetro]);
+
+  const onEditingChange = useCallback((editing: boolean) => {
+    editingCountRef.current = Math.max(0, editingCountRef.current + (editing ? 1 : -1));
+    setPollPaused(editingCountRef.current > 0);
+  }, []);
 
   const handleColumnConfigChange = useCallback(
     (newConfig: ColumnConfigItem[]) => {
@@ -119,20 +138,22 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
   const onVoteAddOptimistic = useCallback((cardId: string) => {
     setData((prev) => {
       if (!prev || prev.votesRemaining <= 0) return prev;
-      return {
+      const next = {
         ...prev,
         votesRemaining: prev.votesRemaining - 1,
         cards: prev.cards.map((c) =>
           c.id === cardId ? { ...c, voteCount: c.voteCount + 1, userVotesOnCard: c.userVotesOnCard + 1 } : c
         ),
       };
+      fingerprintRef.current = retroStateFingerprint(next);
+      return next;
     });
   }, []);
 
   const onVoteRemoveOptimistic = useCallback((cardId: string) => {
     setData((prev) => {
       if (!prev) return prev;
-      return {
+      const next = {
         ...prev,
         votesRemaining: prev.votesRemaining + 1,
         cards: prev.cards.map((c) =>
@@ -141,10 +162,16 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
             : c
         ),
       };
+      fingerprintRef.current = retroStateFingerprint(next);
+      return next;
     });
   }, []);
 
-  const columnConfig = data?.columnConfig ?? [];
+  const handleColumnSortModeChange = useCallback((columnId: string, mode: "votes" | "order") => {
+    setColumnSortMode((prev) => ({ ...prev, [columnId]: mode }));
+  }, []);
+
+  const columnConfig = useMemo(() => data?.columnConfig ?? [], [data?.columnConfig]);
   const cards = data?.cards;
   const cardsByColumn = useMemo(
     () => {
@@ -180,9 +207,11 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
     [cards, columnConfig, columnSortMode]
   );
 
-  const handleColumnSortModeChange = useCallback((columnId: string, mode: "votes" | "order") => {
-    setColumnSortMode((prev) => ({ ...prev, [columnId]: mode }));
-  }, []);
+  const columnGridStyle = useMemo(
+    () =>
+      ({ "--akqaretro-col-count": columnConfig.length }) as React.CSSProperties,
+    [columnConfig.length]
+  );
 
   if (loading && !data) {
     return (
@@ -193,7 +222,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
   }
   if (error && !data) {
     return (
-      <div className="akqaretro-board akqaretro-board--error flex min-h-[40vh] items-center justify-center text-red-600" role="alert">
+      <div className="akqaretro-board akqaretro-board--error flex min-h-[40vh] items-center justify-center akqaretro-text-error" role="alert">
         {error}
       </div>
     );
@@ -211,7 +240,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
         </div>
         <div className="akqaretro-board__header-right flex flex-wrap items-center gap-4">
           {data.isOwner && (
-            <div className="akqaretro-board__owner-toggles flex items-center gap-4 border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] px-4 py-2 akqaretro-caption">
+            <div className="akqaretro-board__owner-toggles flex items-center gap-4 border border-[var(--akqa-border)] bg-[var(--surface-elevated)] px-4 py-2 akqaretro-caption">
               <label className="akqaretro-board__toggle-hide-posts flex items-center gap-2 cursor-pointer text-[var(--akqa-muted)] hover:text-[var(--foreground)]">
                 <input
                   type="checkbox"
@@ -284,6 +313,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
                 {snapshotting ? "…" : "Snapshot"}
               </button>
               <button
+                ref={snapshotsTriggerRef}
                 type="button"
                 onClick={() => setSnapshotsOpen(true)}
                 className="akqaretro-board__snapshots-menu text-sm text-[var(--akqa-muted)] hover:text-[var(--foreground)] border border-[var(--akqa-border)] bg-transparent px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"
@@ -301,7 +331,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
           >
             Add column
           </button>
-          <div className="akqaretro-board__votes flex items-center gap-2 border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] px-4 py-2 akqaretro-caption" role="status" aria-live="polite">
+          <div className="akqaretro-board__votes flex items-center gap-2 border border-[var(--akqa-border)] bg-[var(--surface-elevated)] px-4 py-2 akqaretro-caption" role="status" aria-live="polite">
             <span className="akqaretro-board__votes-label text-[var(--akqa-muted)]">
               Your votes:
             </span>
@@ -311,34 +341,41 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
           </div>
         </div>
       </header>
-      <div className="akqaretro-board__columns grid grid-cols-1 md:grid-cols-3 gap-6 min-w-0" style={{ gridTemplateColumns: `repeat(${columnConfig.length}, minmax(0, 1fr))` }}>
-        {columnConfig.map((col) => (
-          <RetroColumn
-            key={col.id}
-            columnId={col.id}
-            columnTitle={col.title}
-            isFixed={Boolean(col.fixed)}
-            isActionsColumn={col.id === ACTIONS_COLUMN_ID}
-            cards={cardsByColumn[col.id] ?? []}
-            sortMode={columnSortMode[col.id] ?? "votes"}
-            onSortModeChange={handleColumnSortModeChange}
-            voterId={voterId}
-            creatorId={voterId}
-            votesRemaining={data.votesRemaining}
-            voteCountsHidden={Boolean(data.voteCountsHidden)}
-            token={token}
-            columnConfig={columnConfig}
-            onColumnConfigChange={handleColumnConfigChange}
-            onRefetch={refetch}
-            onVoteAddOptimistic={onVoteAddOptimistic}
-            onVoteRemoveOptimistic={onVoteRemoveOptimistic}
-          />
-        ))}
+      <div className="akqaretro-board__columns-wrap">
+        <div
+          className="akqaretro-board__columns"
+          style={columnGridStyle}
+        >
+          {columnConfig.map((col) => (
+            <RetroColumn
+              key={col.id}
+              columnId={col.id}
+              columnTitle={col.title}
+              isFixed={Boolean(col.fixed)}
+              isActionsColumn={col.id === ACTIONS_COLUMN_ID}
+              cards={cardsByColumn[col.id] ?? []}
+              sortMode={columnSortMode[col.id] ?? "votes"}
+              onSortModeChange={handleColumnSortModeChange}
+              voterId={voterId}
+              creatorId={voterId}
+              votesRemaining={data.votesRemaining}
+              voteCountsHidden={Boolean(data.voteCountsHidden)}
+              token={token}
+              columnConfig={columnConfig}
+              onColumnConfigChange={handleColumnConfigChange}
+              onRefetch={refetch}
+              onVoteAddOptimistic={onVoteAddOptimistic}
+              onVoteRemoveOptimistic={onVoteRemoveOptimistic}
+              onEditingChange={onEditingChange}
+            />
+          ))}
+        </div>
       </div>
       <SnapshotsModal
         token={token}
         isOpen={snapshotsOpen}
         onClose={() => setSnapshotsOpen(false)}
+        returnFocusRef={snapshotsTriggerRef}
       />
     </div>
   );

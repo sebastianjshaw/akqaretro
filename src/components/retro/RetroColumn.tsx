@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -33,9 +33,10 @@ interface RetroColumnProps {
   onRefetch: () => void;
   onVoteAddOptimistic: (cardId: string) => void;
   onVoteRemoveOptimistic: (cardId: string) => void;
+  onEditingChange: (editing: boolean) => void;
 }
 
-export function RetroColumn({
+function RetroColumnInner({
   columnId,
   columnTitle,
   isFixed,
@@ -53,6 +54,7 @@ export function RetroColumn({
   onRefetch,
   onVoteAddOptimistic,
   onVoteRemoveOptimistic,
+  onEditingChange,
 }: RetroColumnProps) {
   const [hasDraft, setHasDraft] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -60,6 +62,13 @@ export function RetroColumn({
   useEffect(() => {
     if (!editingTitle) setTitleValue(columnTitle);
   }, [columnTitle, editingTitle]);
+
+  useEffect(() => {
+    if (editingTitle) {
+      onEditingChange(true);
+      return () => onEditingChange(false);
+    }
+  }, [editingTitle, onEditingChange]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -139,7 +148,7 @@ export function RetroColumn({
         const res = await fetch(`/api/cards/${targetCardId}/merge`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sourceCardId: activeId }),
+          body: JSON.stringify({ sourceCardId: activeId, retroToken: token }),
         });
         if (!res.ok) return;
         onRefetch();
@@ -152,12 +161,12 @@ export function RetroColumn({
       const res = await fetch(`/api/cards/${activeId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newIndex }),
+        body: JSON.stringify({ newIndex, retroToken: token }),
       });
       if (!res.ok) return;
       onRefetch();
     },
-    [cards, onRefetch]
+    [cards, onRefetch, token]
   );
 
   const handleDragEnd = useCallback(
@@ -170,7 +179,7 @@ export function RetroColumn({
   );
 
   return (
-    <div className="akqaretro-column flex flex-col border border-[var(--akqa-border)] bg-[var(--akqa-white)] dark:bg-[#2a2a2a] min-h-[320px] min-w-0">
+    <div className="akqaretro-column flex flex-col border border-[var(--akqa-border)] bg-[var(--surface-elevated)] min-h-[320px] min-w-0">
       <div className="akqaretro-column__header flex items-center justify-between gap-2 p-4 border-b border-[var(--akqa-border)]">
         <div className="akqaretro-column__title-wrap flex-1 min-w-0 flex items-center gap-2">
           {isFixed ? (
@@ -206,7 +215,7 @@ export function RetroColumn({
               value={sortMode}
               onChange={(e) => onSortModeChange(columnId, e.target.value as "votes" | "order")}
               aria-label={`Sort ${columnTitle} by`}
-              className="akqaretro-column__sort-select text-xs bg-[var(--background)] border border-[var(--akqa-border)] text-[var(--foreground)] px-2 py-1 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] cursor-pointer"
+              className="akqaretro-column__sort-select akqaretro-sharp text-xs bg-[var(--background)] border border-[var(--akqa-border)] text-[var(--foreground)] px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] cursor-pointer"
             >
               <option value="votes">By Votes</option>
               <option value="order">by Added</option>
@@ -217,7 +226,7 @@ export function RetroColumn({
               type="button"
               onClick={handleRemoveColumn}
               aria-label={`Remove column ${columnTitle}`}
-              className="akqaretro-column__remove text-sm text-[var(--akqa-muted)] hover:text-red-600 dark:hover:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] px-2 py-1 rounded border-0 bg-transparent cursor-pointer"
+              className="akqaretro-column__remove akqaretro-sharp text-sm text-[var(--akqa-muted)] hover:text-[var(--akqa-error)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] px-2 py-1 border-0 bg-transparent cursor-pointer"
             >
               Remove
             </button>
@@ -240,6 +249,7 @@ export function RetroColumn({
               <RetroCardItem
                 key={card.id}
                 card={card}
+                token={token}
                 voterId={voterId}
                 votesRemaining={votesRemaining}
                 voteCountsHidden={voteCountsHidden}
@@ -247,6 +257,7 @@ export function RetroColumn({
                 onRefetch={onRefetch}
                 onVoteAddOptimistic={onVoteAddOptimistic}
                 onVoteRemoveOptimistic={onVoteRemoveOptimistic}
+                onEditingChange={onEditingChange}
               />
             ))}
           </SortableContext>
@@ -257,6 +268,7 @@ export function RetroColumn({
               creatorId={creatorId}
               onSaved={handleDraftSaved}
               onCancel={handleDraftCancel}
+              onEditingChange={onEditingChange}
             />
           )}
         </DndContext>
@@ -264,3 +276,5 @@ export function RetroColumn({
     </div>
   );
 }
+
+export const RetroColumn = React.memo(RetroColumnInner);

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { LIMITS } from "@/lib/validation";
 import { safeParseJson } from "@/lib/safeJson";
+import { assertCardRetroAccess, parseRetroToken } from "@/lib/retroAccess";
 
 const MERGE_SEPARATOR = "\n\n---\n\n";
 
@@ -15,8 +16,9 @@ export async function POST(
 ) {
   try {
     const targetCardId = (await params).cardId;
-    const body = await safeParseJson<{ sourceCardId?: string }>(request);
+    const body = await safeParseJson<{ sourceCardId?: string; retroToken?: string }>(request);
     const sourceCardId = body ? String(body.sourceCardId ?? "").trim().slice(0, 64) : "";
+    const retroToken = parseRetroToken(request, body);
     if (!sourceCardId || sourceCardId === targetCardId) {
       return NextResponse.json(
         { error: "sourceCardId is required and must differ from target" },
@@ -35,6 +37,10 @@ export async function POST(
     ]);
     if (!target || !source) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
+    }
+    const access = await assertCardRetroAccess(target, retroToken);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
     }
     if (target.retroId !== source.retroId || target.column !== source.column) {
       return NextResponse.json(

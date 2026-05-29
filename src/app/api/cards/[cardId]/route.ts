@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { midpoint } from "@/lib/order";
 import { LIMITS, clampLength } from "@/lib/validation";
 import { safeParseJson } from "@/lib/safeJson";
+import { assertCardRetroAccess, parseRetroToken } from "@/lib/retroAccess";
 import {
   ACTIONS_COLUMN_ID,
   getDefaultColumnConfig,
@@ -10,14 +11,19 @@ import {
 } from "@/types/retro";
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ cardId: string }> }
 ) {
   try {
     const { cardId } = await params;
+    const retroToken = parseRetroToken(request);
     const card = await prisma.card.findUnique({ where: { id: cardId } });
     if (!card) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
+    }
+    const access = await assertCardRetroAccess(card, retroToken);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
     }
     await prisma.card.delete({ where: { id: cardId } });
     return NextResponse.json({ deleted: cardId });
@@ -33,13 +39,25 @@ export async function PATCH(
 ) {
   try {
     const { cardId } = await params;
+    const body = await safeParseJson<{
+      text?: string;
+      column?: string;
+      orderKey?: string;
+      newIndex?: number;
+      done?: boolean;
+      retroToken?: string;
+    }>(request);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    const retroToken = parseRetroToken(request, body);
     const card = await prisma.card.findUnique({ where: { id: cardId } });
     if (!card) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
-    const body = await safeParseJson<{ text?: string; column?: string; orderKey?: string; newIndex?: number; done?: boolean }>(request);
-    if (!body) {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    const access = await assertCardRetroAccess(card, retroToken);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
     }
     const updates: { text?: string; column?: string; orderKey?: string; done?: boolean } = {};
     if (typeof body.text === "string") updates.text = clampLength(body.text, LIMITS.CARD_TEXT_MAX_LENGTH);
