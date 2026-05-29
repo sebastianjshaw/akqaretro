@@ -8,6 +8,9 @@ import {
   KeyboardSensor,
   useSensor,
   useSensors,
+  pointerWithin,
+  closestCenter,
+  type CollisionDetection,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { RetroCard, ColumnConfigItem } from "@/types/retro";
@@ -15,6 +18,27 @@ import { RetroCardItem } from "./RetroCardItem";
 import { RetroDraftCard } from "./RetroDraftCard";
 import { LIMITS } from "@/lib/validation";
 import { useAkqaretroDialog } from "./AkqaretroDialog";
+
+/** Prefer merge drop zones over sortable card ids when the pointer is over a card body. */
+const preferMergeCollision: CollisionDetection = (args) => {
+  const pointerHits = pointerWithin(args);
+  const activeCardId = String(args.active.id);
+  const mergeHit = pointerHits.find(
+    (c) => String(c.id).startsWith("merge-") && String(c.id) !== `merge-${activeCardId}`
+  );
+  if (mergeHit) return [mergeHit];
+  return closestCenter(args);
+};
+
+function mergeDropIdFromCollisions(
+  collisions: DragEndEvent["collisions"],
+  activeCardId: string
+): string | null {
+  const hit = collisions?.find(
+    (c) => String(c.id).startsWith("merge-") && String(c.id) !== `merge-${activeCardId}`
+  );
+  return hit ? String(hit.id) : null;
+}
 
 interface RetroColumnProps {
   columnId: string;
@@ -174,9 +198,12 @@ function RetroColumnInner({
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over) return;
-      handleReorder(String(active.id), String(over.id));
+      const { active, over, collisions } = event;
+      const activeId = String(active.id);
+      const mergeDropId = mergeDropIdFromCollisions(collisions, activeId);
+      const overId = mergeDropId ?? (over ? String(over.id) : null);
+      if (!overId) return;
+      handleReorder(activeId, overId);
     },
     [handleReorder]
   );
@@ -246,7 +273,7 @@ function RetroColumnInner({
         </div>
       </div>
       <div className="akqaretro-column__list flex-1 p-4 overflow-auto min-h-0">
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} collisionDetection={preferMergeCollision} onDragEnd={handleDragEnd}>
           <SortableContext items={cards.map((c) => c.id)} strategy={verticalListSortingStrategy}>
             {cards.map((card) => (
               <RetroCardItem
