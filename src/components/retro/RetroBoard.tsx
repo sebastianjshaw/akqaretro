@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getVoterId } from "@/lib/voterId";
+import { ensureDeviceCookie } from "@/lib/bindDeviceClient";
 import { retroStateFingerprint } from "@/lib/retroStateKey";
 import type { RetroState, RetroCard, ColumnConfigItem } from "@/types/retro";
 import { ACTIONS_COLUMN_ID, ensureActionsLast } from "@/types/retro";
 import { RetroColumn } from "./RetroColumn";
 import { SnapshotsModal } from "./SnapshotsModal";
+import { useAkqaretroDialog } from "./AkqaretroDialog";
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -16,6 +18,7 @@ interface RetroBoardProps {
 }
 
 export function RetroBoard({ token, initial }: RetroBoardProps) {
+  const { confirm, alert, dialog } = useAkqaretroDialog();
   const [data, setData] = useState<RetroState | null>(initial ?? null);
   const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState("");
@@ -29,6 +32,8 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
   );
   const editingCountRef = useRef(0);
   const snapshotsTriggerRef = useRef<HTMLButtonElement>(null);
+  const etagRef = useRef<string | null>(null);
+  const deviceBoundRef = useRef(false);
   if (voterIdRef.current === undefined) voterIdRef.current = getVoterId();
   const voterId = voterIdRef.current;
 
@@ -42,14 +47,19 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
   const fetchRetro = useCallback(
     async (signal?: AbortSignal) => {
       try {
+        const headers: HeadersInit = {};
+        if (etagRef.current) headers["If-None-Match"] = etagRef.current;
         const res = await fetch(
           `/api/retros/${token}?voterId=${encodeURIComponent(voterId)}`,
-          { signal: signal ?? null, credentials: "include" }
+          { signal: signal ?? null, credentials: "include", headers }
         );
+        if (res.status === 304) return;
         if (!res.ok) {
           if (res.status === 404) setError("Retro not found");
           return;
         }
+        const nextEtag = res.headers.get("ETag");
+        if (nextEtag) etagRef.current = nextEtag;
         const json = (await res.json()) as RetroState;
         applyRetroState(json);
         setError("");
@@ -62,6 +72,12 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
     },
     [token, voterId, applyRetroState]
   );
+
+  useEffect(() => {
+    if (deviceBoundRef.current) return;
+    deviceBoundRef.current = true;
+    void ensureDeviceCookie(voterId);
+  }, [voterId]);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -129,11 +145,11 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
     });
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
-      window.alert(json.error ?? "Could not add column.");
+      await alert(json.error ?? "Could not add column.");
       return;
     }
     fetchRetro();
-  }, [data, token, fetchRetro]);
+  }, [data, token, fetchRetro, alert]);
 
   const onVoteAddOptimistic = useCallback((cardId: string) => {
     setData((prev) => {
@@ -297,7 +313,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
                     });
                     if (!res.ok) {
                       const j = await res.json().catch(() => ({}));
-                      window.alert(j.error ?? "Failed to create snapshot");
+                      await alert(j.error ?? "Failed to create snapshot");
                       return;
                     }
                     const j = await res.json();
@@ -323,14 +339,16 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
               </button>
             </>
           )}
-          <button
-            type="button"
-            onClick={handleAddColumn}
-            className="akqaretro-board__add-column text-sm text-[var(--akqa-muted)] hover:text-[var(--foreground)] border border-[var(--akqa-border)] bg-transparent px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"
-            aria-label="Add column"
-          >
-            Add column
-          </button>
+          {data.isOwner && (
+            <button
+              type="button"
+              onClick={handleAddColumn}
+              className="akqaretro-board__add-column text-sm text-[var(--akqa-muted)] hover:text-[var(--foreground)] border border-[var(--akqa-border)] bg-transparent px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"
+              aria-label="Add column"
+            >
+              Add column
+            </button>
+          )}
           <div className="akqaretro-board__votes flex items-center gap-2 border border-[var(--akqa-border)] bg-[var(--surface-elevated)] px-4 py-2 akqaretro-caption" role="status" aria-live="polite">
             <span className="akqaretro-board__votes-label text-[var(--akqa-muted)]">
               Your votes:
@@ -377,6 +395,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
         onClose={() => setSnapshotsOpen(false)}
         returnFocusRef={snapshotsTriggerRef}
       />
+      {dialog}
     </div>
   );
 }

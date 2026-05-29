@@ -14,6 +14,7 @@ import type { RetroCard, ColumnConfigItem } from "@/types/retro";
 import { RetroCardItem } from "./RetroCardItem";
 import { RetroDraftCard } from "./RetroDraftCard";
 import { LIMITS } from "@/lib/validation";
+import { useAkqaretroDialog } from "./AkqaretroDialog";
 
 interface RetroColumnProps {
   columnId: string;
@@ -56,6 +57,7 @@ function RetroColumnInner({
   onVoteRemoveOptimistic,
   onEditingChange,
 }: RetroColumnProps) {
+  const { confirm, alert, dialog } = useAkqaretroDialog();
   const [hasDraft, setHasDraft] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleValue, setTitleValue] = useState(columnTitle);
@@ -98,12 +100,12 @@ function RetroColumnInner({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        window.alert(data.error ?? "Could not update columns.");
+        await alert(data.error ?? "Could not update columns.");
         return;
       }
       onRefetch();
     },
-    [token, onRefetch]
+    [token, onRefetch, alert]
   );
 
   const handleTitleBlur = useCallback(() => {
@@ -129,15 +131,16 @@ function RetroColumnInner({
     []
   );
 
-  const handleRemoveColumn = useCallback(() => {
-    const confirmed = window.confirm(
-      `Remove column “${columnTitle}”? All cards in this column will be deleted.`
+  const handleRemoveColumn = useCallback(async () => {
+    const confirmed = await confirm(
+      `Remove column “${columnTitle}”? All cards in this column will be deleted.`,
+      { title: "Remove column", confirmLabel: "Remove", destructive: true }
     );
     if (!confirmed) return;
     const newConfig = columnConfig.filter((c) => c.id !== columnId);
     onColumnConfigChange(newConfig);
     saveColumnConfig(newConfig);
-  }, [columnId, columnTitle, columnConfig, onColumnConfigChange, saveColumnConfig]);
+  }, [columnId, columnTitle, columnConfig, onColumnConfigChange, saveColumnConfig, confirm]);
 
   const handleReorder = useCallback(
     async (activeId: string, overId: string) => {
@@ -273,6 +276,7 @@ function RetroColumnInner({
           )}
         </DndContext>
       </div>
+      {dialog}
     </div>
   );
 }

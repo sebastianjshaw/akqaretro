@@ -6,30 +6,29 @@ import { generateRetroToken } from "@/lib/token";
 import { LIMITS, clampLength } from "@/lib/validation";
 import { safeParseJson } from "@/lib/safeJson";
 import { appendOwnerCookie } from "@/lib/retroOwner";
+import { appendDeviceCookie, getDeviceIdFromRequest } from "@/lib/deviceCookie";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    const creatorIdRaw = request.nextUrl.searchParams.get("creatorId") ?? "";
-    const creatorId = clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH);
+    const deviceId = getDeviceIdFromRequest(request);
     const previousUserIdRaw = request.nextUrl.searchParams.get("previousUserId") ?? "";
     const previousUserId = clampLength(previousUserIdRaw, LIMITS.USER_ID_MAX_LENGTH);
 
     if (session?.user?.id) {
       const userId = session.user.id;
-      // One-time merge: retros created with an old per-device userId get reassigned to this account (Google sub)
       if (previousUserId && previousUserId !== userId) {
         await prisma.retro.updateMany({
           where: { userId: previousUserId },
           data: { userId },
         });
       }
-      // Claim device-only retros (creatorId set, userId null or different) to this account
-      if (creatorId) {
+      // Claim device-only retros only when device cookie matches stored creatorId
+      if (deviceId) {
         await prisma.retro.updateMany({
-          where: { creatorId, OR: [{ userId: null }, { userId: { not: userId } }] },
+          where: { creatorId: deviceId, OR: [{ userId: null }, { userId: { not: userId } }] },
           data: { userId },
         });
       }
@@ -53,11 +52,14 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (!creatorId) {
-      return NextResponse.json({ error: "creatorId is required when not signed in" }, { status: 400 });
+    if (!deviceId) {
+      return NextResponse.json(
+        { error: "Device session required. Bind device via POST /api/device/bind." },
+        { status: 401 }
+      );
     }
     const retros = await prisma.retro.findMany({
-      where: { creatorId },
+      where: { creatorId: deviceId },
       orderBy: { createdAt: "desc" },
       take: LIMITS.MY_RETROS_MAX,
       select: { id: true, token: true, title: true, date: true, createdAt: true },
@@ -93,7 +95,15 @@ export async function POST(request: NextRequest) {
     const title = clampLength(String(body.title ?? ""), LIMITS.TITLE_MAX_LENGTH);
     const date = String(body.date ?? new Date().toISOString().slice(0, 10)).trim().slice(0, 10);
     const creatorIdRaw = typeof body.creatorId === "string" ? body.creatorId : "";
-    const creatorId = creatorIdRaw ? clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH) : null;
+    let creatorId = creatorIdRaw ? clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH) : null;
+    const cookieDeviceId = getDeviceIdFromRequest(request);
+    if (!session?.user?.id) {
+      if (cookieDeviceId) {
+        creatorId = cookieDeviceId;
+      } else if (!creatorId) {
+        return NextResponse.json({ error: "creatorId or device cookie required" }, { status: 400 });
+      }
+    }
     if (!title) {
       return NextResponse.json({ error: "title is required" }, { status: 400 });
     }
@@ -115,6 +125,9 @@ export async function POST(request: NextRequest) {
     });
     if (retro.creatorId) {
       appendOwnerCookie(response, retro.token, retro.creatorId);
+    }
+    if (creatorId) {
+      appendDeviceCookie(response, creatorId);
     }
     return response;
   } catch (e) {

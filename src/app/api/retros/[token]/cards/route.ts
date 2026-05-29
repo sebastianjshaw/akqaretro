@@ -8,6 +8,7 @@ import {
   getDefaultColumnConfig,
   normalizeColumnConfig,
 } from "@/types/retro";
+import { getDeviceIdFromRequest } from "@/lib/deviceCookie";
 
 export async function POST(
   request: NextRequest,
@@ -34,9 +35,15 @@ export async function POST(
       return NextResponse.json({ error: "Invalid column" }, { status: 400 });
     }
     const text = clampLength(String(body.text ?? ""), LIMITS.CARD_TEXT_MAX_LENGTH);
-    const creatorId = typeof body.creatorId === "string"
-      ? clampLength(body.creatorId.trim(), LIMITS.VOTER_ID_MAX_LENGTH) || null
-      : null;
+    const deviceId = getDeviceIdFromRequest(request);
+    const bodyCreatorId =
+      typeof body.creatorId === "string"
+        ? clampLength(body.creatorId.trim(), LIMITS.VOTER_ID_MAX_LENGTH) || null
+        : null;
+    if (bodyCreatorId && deviceId && bodyCreatorId !== deviceId) {
+      return NextResponse.json({ error: "creatorId does not match device session" }, { status: 403 });
+    }
+    const creatorId = deviceId ?? bodyCreatorId;
     const userId = session?.user?.id ?? null;
     const lastInColumn = await prisma.card.findFirst({
       where: { retroId: retro.id, column },

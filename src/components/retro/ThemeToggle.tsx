@@ -39,7 +39,7 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <span
-        className="akqaretro-theme-toggle akqaretro-theme-toggle--placeholder w-9 h-9 inline-block text-[var(--akqa-muted)]"
+        className="akqaretro-theme-toggle akqaretro-theme-toggle--placeholder akqaretro-touch-target inline-block text-[var(--akqa-muted)]"
         aria-hidden
       />
     );
@@ -62,7 +62,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={cycle}
-      className="akqaretro-theme-toggle flex items-center justify-center w-9 h-9 rounded border border-[var(--akqa-border)] bg-[var(--surface-elevated)] text-[var(--akqa-muted)] hover:text-[var(--foreground)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"
+      className="akqaretro-theme-toggle akqaretro-touch-target flex items-center justify-center rounded border border-[var(--akqa-border)] bg-[var(--surface-elevated)] text-[var(--akqa-muted)] hover:text-[var(--foreground)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)]"
       aria-label={label}
       title={label}
     >

@@ -4,6 +4,8 @@ import type { Session } from "next-auth";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getVoterId } from "@/lib/voterId";
+import { ensureDeviceCookie } from "@/lib/bindDeviceClient";
+import { useAkqaretroDialog } from "@/components/retro/AkqaretroDialog";
 
 interface RetroSummary {
   id: string;
@@ -19,6 +21,7 @@ interface HomeClientProps {
 
 export function HomeClient({ session }: HomeClientProps) {
   const router = useRouter();
+  const { confirm, alert, dialog } = useAkqaretroDialog();
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
@@ -33,8 +36,10 @@ export function HomeClient({ session }: HomeClientProps) {
     setLoadingList(true);
     setListError("");
     try {
+      if (!session?.user?.id && creatorId) {
+        await ensureDeviceCookie(creatorId);
+      }
       const params = new URLSearchParams();
-      if (creatorId) params.set("creatorId", creatorId);
       const previousUserId =
         typeof window !== "undefined" ? localStorage.getItem("akqaretro_last_user_id") : null;
       if (previousUserId) params.set("previousUserId", previousUserId);
@@ -55,22 +60,6 @@ export function HomeClient({ session }: HomeClientProps) {
       }
       const errJson = await res.json().catch(() => ({}));
       const msg = typeof errJson.error === "string" ? errJson.error : "";
-      // 400 = no session and no creatorId; fall back to device-only list when not signed in
-      if (res.status === 400 && creatorId) {
-        const resDevice = await fetch(
-          `/api/retros?creatorId=${encodeURIComponent(creatorId)}`,
-          { credentials: "include", cache: "no-store" }
-        );
-        if (resDevice.ok) {
-          const data = await resDevice.json();
-          setMyRetros(Array.isArray(data) ? data : []);
-          return;
-        }
-        const devErr = await resDevice.json().catch(() => ({}));
-        setListError(typeof devErr.error === "string" ? devErr.error : msg || "Could not load your retros.");
-        setMyRetros([]);
-        return;
-      }
       setListError(msg || "Could not load your retros.");
       setMyRetros([]);
     } catch {
@@ -109,8 +98,9 @@ export function HomeClient({ session }: HomeClientProps) {
   async function handleDeleteRetro(e: React.MouseEvent, retro: RetroSummary) {
     e.preventDefault();
     e.stopPropagation();
-    const confirmed = window.confirm(
-      `Delete “${retro.title}”? This cannot be undone.`
+    const confirmed = await confirm(
+      `Delete “${retro.title}”? This cannot be undone.`,
+      { title: "Delete retrospective", confirmLabel: "Delete", destructive: true }
     );
     if (!confirmed) return;
     setDeletingToken(retro.token);
@@ -123,10 +113,10 @@ export function HomeClient({ session }: HomeClientProps) {
         setMyRetros((prev) => prev.filter((r) => r.token !== retro.token));
       } else {
         const data = await res.json().catch(() => ({}));
-        window.alert(data.error ?? "Could not delete retro.");
+        await alert(data.error ?? "Could not delete retro.");
       }
     } catch {
-      window.alert("Could not delete retro.");
+      await alert("Could not delete retro.");
     } finally {
       setDeletingToken(null);
     }
@@ -285,6 +275,7 @@ export function HomeClient({ session }: HomeClientProps) {
         </section>
         <PrivacyNotice />
       </div>
+      {dialog}
     </div>
   );
 }

@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { LIMITS } from "@/lib/validation";
 import { safeParseJson } from "@/lib/safeJson";
 import { assertCardRetroAccess, parseRetroToken } from "@/lib/retroAccess";
+import { getDeviceIdFromRequest } from "@/lib/deviceCookie";
 
 const VOTES_PER_USER = 6;
-
-function validateVoterId(v: string): string | null {
-  const s = v.trim().slice(0, LIMITS.VOTER_ID_MAX_LENGTH);
-  return s || null;
-}
 
 export async function POST(
   request: NextRequest,
@@ -18,11 +13,11 @@ export async function POST(
 ) {
   try {
     const { cardId } = await params;
-    const body = await safeParseJson<{ voterId?: string; retroToken?: string }>(request);
-    const voterId = body ? validateVoterId(String(body.voterId ?? "")) : null;
+    const voterId = getDeviceIdFromRequest(request);
     if (!voterId) {
-      return NextResponse.json({ error: "voterId is required" }, { status: 400 });
+      return NextResponse.json({ error: "Device session required" }, { status: 401 });
     }
+    const body = await safeParseJson<{ retroToken?: string }>(request);
     const retroToken = parseRetroToken(request, body);
     const card = await prisma.card.findUnique({ where: { id: cardId } });
     if (!card) {
@@ -76,10 +71,9 @@ export async function DELETE(
 ) {
   try {
     const { cardId } = await params;
-    const voterIdRaw = request.nextUrl.searchParams.get("voterId") ?? "";
-    const voterId = voterIdRaw.slice(0, LIMITS.VOTER_ID_MAX_LENGTH).trim();
+    const voterId = getDeviceIdFromRequest(request);
     if (!voterId) {
-      return NextResponse.json({ error: "voterId is required" }, { status: 400 });
+      return NextResponse.json({ error: "Device session required" }, { status: 401 });
     }
     const retroToken = parseRetroToken(request);
     const card = await prisma.card.findUnique({ where: { id: cardId } });

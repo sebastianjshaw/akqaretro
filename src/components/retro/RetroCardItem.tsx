@@ -6,6 +6,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import type { RetroCard } from "@/types/retro";
 import { CheckIcon, XIcon, PencilIcon, TrashIcon, ThumbsUpIcon } from "./icons";
+import { useAkqaretroDialog } from "./AkqaretroDialog";
 
 interface RetroCardItemProps {
   card: RetroCard;
@@ -21,6 +22,7 @@ interface RetroCardItemProps {
 }
 
 function RetroCardItemInner({ card, token, voterId, votesRemaining, voteCountsHidden, isActionsColumn, onRefetch, onVoteAddOptimistic, onVoteRemoveOptimistic, onEditingChange }: RetroCardItemProps) {
+  const { confirm, dialog } = useAkqaretroDialog();
   const [text, setText] = useState(card.text);
   // Always start in view mode so other viewers never see an open text box; only the user who clicks Edit does
   const [isEditing, setIsEditing] = useState(false);
@@ -77,7 +79,13 @@ function RetroCardItemInner({ card, token, voterId, votesRemaining, voteCountsHi
   }, [text, card.id, card.text, token, onRefetch]);
 
   const handleDelete = useCallback(async () => {
-    if (deleting || !confirm("Delete this card?")) return;
+    if (deleting) return;
+    const confirmed = await confirm("Delete this card?", {
+      title: "Delete card",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/cards/${card.id}?retroToken=${encodeURIComponent(token)}`, { method: "DELETE" });
@@ -85,7 +93,7 @@ function RetroCardItemInner({ card, token, voterId, votesRemaining, voteCountsHi
     } finally {
       setDeleting(false);
     }
-  }, [card.id, deleting, token, onRefetch]);
+  }, [card.id, deleting, token, onRefetch, confirm]);
 
   const handleVoteAdd = useCallback(async () => {
     if (votesRemaining <= 0) return;
@@ -94,27 +102,28 @@ function RetroCardItemInner({ card, token, voterId, votesRemaining, voteCountsHi
       const res = await fetch(`/api/cards/${card.id}/vote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ voterId, retroToken: token }),
+        credentials: "include",
+        body: JSON.stringify({ retroToken: token }),
       });
       if (!res.ok) onRefetch();
     } catch {
       onRefetch();
     }
-  }, [card.id, voterId, token, votesRemaining, onRefetch, onVoteAddOptimistic]);
+  }, [card.id, token, votesRemaining, onRefetch, onVoteAddOptimistic]);
 
   const handleVoteRemove = useCallback(async () => {
     if (card.userVotesOnCard <= 0) return;
     onVoteRemoveOptimistic(card.id);
     try {
       const res = await fetch(
-        `/api/cards/${card.id}/vote?voterId=${encodeURIComponent(voterId)}&retroToken=${encodeURIComponent(token)}`,
-        { method: "DELETE" }
+        `/api/cards/${card.id}/vote?retroToken=${encodeURIComponent(token)}`,
+        { method: "DELETE", credentials: "include" }
       );
       if (!res.ok) onRefetch();
     } catch {
       onRefetch();
     }
-  }, [card.id, card.userVotesOnCard, voterId, token, onRefetch, onVoteRemoveOptimistic]);
+  }, [card.id, card.userVotesOnCard, token, onRefetch, onVoteRemoveOptimistic]);
 
   const handleDone = useCallback(async () => {
     if (markingDone || done) return;
@@ -150,8 +159,9 @@ function RetroCardItemInner({ card, token, voterId, votesRemaining, voteCountsHi
     >
       <div ref={setMergeRef} className={`akqaretro-card__inner flex gap-1.5 p-1.5 ${isEditing ? "akqaretro-card__inner--editing" : ""}`}>
         {!isEditing && (
-          <div
-            className="akqaretro-card__handle flex shrink-0 cursor-grab active:cursor-grabbing touch-none p-0.5 text-[var(--akqa-dusty)] hover:text-[var(--akqa-dove)] dark:hover:text-[var(--akqa-white)]"
+          <button
+            type="button"
+            className="akqaretro-card__handle flex shrink-0 cursor-grab active:cursor-grabbing touch-none p-0.5 text-[var(--akqa-dusty)] hover:text-[var(--akqa-dove)] dark:hover:text-[var(--akqa-white)] border-0 bg-transparent"
             aria-label="Drag to reorder or drop on another card to merge"
             {...attributes}
             {...listeners}
@@ -159,7 +169,7 @@ function RetroCardItemInner({ card, token, voterId, votesRemaining, voteCountsHi
             <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
               <path d="M7 2a2 2 0 012 2v12a2 2 0 01-2 2h6a2 2 0 01-2-2V4a2 2 0 012-2H7zm0 2v12h6V4H7z" />
             </svg>
-          </div>
+          </button>
         )}
         <div className="akqaretro-card__body flex-1 min-w-0 flex flex-col gap-1">
           {isEditing ? (
@@ -212,7 +222,11 @@ function RetroCardItemInner({ card, token, voterId, votesRemaining, voteCountsHi
                 </div>
               </div>
               {isMergeOver && (
-                <p className="akqaretro-card__merge-hint mt-1.5 pt-1.5 border-t border-[var(--akqa-dove)]/30 text-[10px] font-medium uppercase tracking-wide text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)]">
+                <p
+                  className="akqaretro-card__merge-hint mt-1.5 pt-1.5 border-t border-[var(--akqa-dove)]/30 text-[10px] font-medium uppercase tracking-wide text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)]"
+                  role="status"
+                  aria-live="polite"
+                >
                   Drop here to merge
                 </p>
               )}
@@ -220,6 +234,7 @@ function RetroCardItemInner({ card, token, voterId, votesRemaining, voteCountsHi
           )}
         </div>
       </div>
+      {dialog}
     </div>
   );
 }
