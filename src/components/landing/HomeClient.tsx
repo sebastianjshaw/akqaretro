@@ -115,9 +115,7 @@ export function HomeClient({ session }: HomeClientProps) {
     if (!confirmed) return;
     setDeletingToken(retro.token);
     try {
-      const url = new URL(`/api/retros/${retro.token}`, window.location.origin);
-      if (creatorId && !session) url.searchParams.set("creatorId", creatorId);
-      const res = await fetch(url.toString(), {
+      const res = await fetch(`/api/retros/${retro.token}`, {
         method: "DELETE",
         credentials: "include",
       });

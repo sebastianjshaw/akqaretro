@@ -10,6 +10,7 @@ import {
   normalizeColumnConfig,
   type ColumnConfigItem,
 } from "@/types/retro";
+import { appendOwnerCookie, isRetroOwner } from "@/lib/retroOwner";
 
 const VOTES_PER_USER = 6;
 const TOKEN_MAX_LENGTH = 256;
@@ -40,11 +41,18 @@ export async function GET(
     const session = await auth();
     const voterIdRaw = _request.nextUrl.searchParams.get("voterId") ?? "";
     const voterId = voterIdRaw.slice(0, LIMITS.VOTER_ID_MAX_LENGTH);
-    const isOwner = !!(session?.user?.id && retro.userId === session.user.id);
+    const isOwner = isRetroOwner(retro, session, _request, token);
+    /** Mint HttpOnly owner cookie for device creators (new retros + legacy boards). */
+    const shouldBootstrapOwner =
+      !isOwner &&
+      !!retro.creatorId &&
+      !!voterId &&
+      voterId === retro.creatorId;
+    const effectiveIsOwner = isOwner || shouldBootstrapOwner;
     const hideCardsFromNonOwners = Boolean((retro as { hideCardsFromNonOwners?: boolean }).hideCardsFromNonOwners);
     const hideVoteCounts = Boolean((retro as { hideVoteCounts?: boolean }).hideVoteCounts);
     let cardsRaw = retro.cards;
-    if (hideCardsFromNonOwners && !isOwner) {
+    if (hideCardsFromNonOwners && !effectiveIsOwner) {
       cardsRaw = retro.cards.filter(
         (c) =>
           (session?.user?.id && (c as { userId?: string }).userId === session.user.id) ||
@@ -85,7 +93,7 @@ export async function GET(
       normalizeColumnConfig((retro as { columnConfig?: unknown }).columnConfig) ??
       getDefaultColumnConfig();
     const columnConfig = ensureActionsLast(rawConfig);
-    return NextResponse.json({
+    const response = NextResponse.json({
       id: retro.id,
       token: retro.token,
       title: retro.title,
@@ -94,13 +102,17 @@ export async function GET(
       updatedAt: retro.updatedAt.toISOString(),
       cards,
       columnConfig,
-      isOwner,
+      isOwner: effectiveIsOwner,
       hideCardsFromNonOwners,
       voteCountsHidden: hideVoteCounts,
       userVoteCount,
       votesRemaining,
       votesPerUserCap: VOTES_PER_USER,
     });
+    if (shouldBootstrapOwner && retro.creatorId) {
+      appendOwnerCookie(response, token, retro.creatorId);
+    }
+    return response;
   } catch (e) {
     console.error("GET /api/retros/[token]", e);
     return NextResponse.json({ error: "Failed to fetch retro" }, { status: 500 });
@@ -153,17 +165,12 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid token" }, { status: 400 });
     }
     const session = await auth();
-    const creatorIdRaw = request.nextUrl.searchParams.get("creatorId") ?? "";
-    const creatorId = creatorIdRaw ? clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH) : null;
 
     const retro = await prisma.retro.findUnique({ where: { token: safeToken } });
     if (!retro) {
       return NextResponse.json({ error: "Retro not found" }, { status: 404 });
     }
-    const isOwnerByUser = session?.user?.id && retro.userId === session.user.id;
-    const isOwnerByCreator =
-      !session?.user?.id && creatorId && retro.creatorId === creatorId;
-    if (!isOwnerByUser && !isOwnerByCreator) {
+    if (!isRetroOwner(retro, session, request, safeToken)) {
       return NextResponse.json({ error: "Not allowed to edit this retro" }, { status: 403 });
     }
 
@@ -226,18 +233,13 @@ export async function DELETE(
       return NextResponse.json({ error: "Invalid token" }, { status: 400 });
     }
     const session = await auth();
-    const creatorIdRaw = request.nextUrl.searchParams.get("creatorId") ?? "";
-    const creatorId = creatorIdRaw ? clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH) : null;
 
     const retro = await prisma.retro.findUnique({ where: { token: safeToken } });
     if (!retro) {
       return NextResponse.json({ error: "Retro not found" }, { status: 404 });
     }
 
-    const isOwnerByUser = session?.user?.id && retro.userId === session.user.id;
-    const isOwnerByCreator =
-      !session?.user?.id && creatorId && retro.creatorId === creatorId;
-    if (!isOwnerByUser && !isOwnerByCreator) {
+    if (!isRetroOwner(retro, session, request, safeToken)) {
       return NextResponse.json({ error: "Not allowed to delete this retro" }, { status: 403 });
     }
 

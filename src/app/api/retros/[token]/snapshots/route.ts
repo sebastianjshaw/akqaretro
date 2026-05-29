@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import { generateRetroToken } from "@/lib/token";
-import { LIMITS, clampLength } from "@/lib/validation";
 import {
   ACTIONS_COLUMN_ID,
   getDefaultColumnConfig,
@@ -11,18 +10,9 @@ import {
   type ColumnConfigItem,
 } from "@/types/retro";
 import { nextOrderKey } from "@/lib/order";
+import { appendOwnerCookie, isRetroOwner } from "@/lib/retroOwner";
 
 export const dynamic = "force-dynamic";
-
-function assertOwner(
-  retro: { userId: string | null; creatorId: string | null },
-  session: { user?: { id?: string } } | null,
-  creatorId: string | null
-): boolean {
-  const byUser = session?.user?.id && retro.userId === session.user.id;
-  const byCreator = !session?.user?.id && creatorId && retro.creatorId === creatorId;
-  return !!(byUser || byCreator);
-}
 
 /** GET: list snapshots for this retro's lineage (owner only) */
 export async function GET(
@@ -32,12 +22,10 @@ export async function GET(
   try {
     const { token } = await params;
     const session = await auth();
-    const creatorIdRaw = request.nextUrl.searchParams.get("creatorId") ?? "";
-    const creatorId = creatorIdRaw ? clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH) : null;
 
     const retro = await prisma.retro.findUnique({ where: { token } });
     if (!retro) return NextResponse.json({ error: "Retro not found" }, { status: 404 });
-    if (!assertOwner(retro, session, creatorId)) {
+    if (!isRetroOwner(retro, session, request, token)) {
       return NextResponse.json({ error: "Not allowed" }, { status: 403 });
     }
 
@@ -70,8 +58,6 @@ export async function POST(
   try {
     const { token } = await params;
     const session = await auth();
-    const creatorIdRaw = request.nextUrl.searchParams.get("creatorId") ?? "";
-    const creatorId = creatorIdRaw ? clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH) : null;
 
     const retro = await prisma.retro.findUnique({
       where: { token },
@@ -80,7 +66,7 @@ export async function POST(
       },
     });
     if (!retro) return NextResponse.json({ error: "Retro not found" }, { status: 404 });
-    if (!assertOwner(retro, session, creatorId)) {
+    if (!isRetroOwner(retro, session, request, token)) {
       return NextResponse.json({ error: "Not allowed" }, { status: 403 });
     }
 
@@ -147,11 +133,15 @@ export async function POST(
       data: { resultRetroId: newRetro.id },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       snapshotId: snapshot.id,
       newRetroToken: newRetro.token,
       newRetroId: newRetro.id,
     });
+    if (newRetro.creatorId) {
+      appendOwnerCookie(response, newRetro.token, newRetro.creatorId);
+    }
+    return response;
   } catch (e) {
     console.error("POST /api/retros/[token]/snapshots", e);
     return NextResponse.json({ error: "Failed to create snapshot" }, { status: 500 });

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { LIMITS, clampLength } from "@/lib/validation";
 import { ensureActionsLast, normalizeColumnConfig, getDefaultColumnConfig, type ColumnConfigItem } from "@/types/retro";
+import { isRetroOwner } from "@/lib/retroOwner";
 
 export const dynamic = "force-dynamic";
 
@@ -14,16 +14,11 @@ export async function GET(
   try {
     const { token, snapshotId } = await params;
     const session = await auth();
-    const creatorIdRaw = request.nextUrl.searchParams.get("creatorId") ?? "";
-    const creatorId = creatorIdRaw ? clampLength(creatorIdRaw, LIMITS.CREATOR_ID_MAX_LENGTH) : null;
 
     const retro = await prisma.retro.findUnique({ where: { token } });
     if (!retro) return NextResponse.json({ error: "Retro not found" }, { status: 404 });
 
-    const isOwner =
-      (session?.user?.id && retro.userId === session.user.id) ||
-      (!session?.user?.id && creatorId && retro.creatorId === creatorId);
-    if (!isOwner) {
+    if (!isRetroOwner(retro, session, request, token)) {
       return NextResponse.json({ error: "Not allowed" }, { status: 403 });
     }
 

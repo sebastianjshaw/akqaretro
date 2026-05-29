@@ -5,25 +5,21 @@ import type { SnapshotListItem, SnapshotDetail, ColumnConfigItem } from "@/types
 
 interface SnapshotsModalProps {
   token: string;
-  voterId: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function SnapshotsModal({ token, voterId, isOpen, onClose }: SnapshotsModalProps) {
+export function SnapshotsModal({ token, isOpen, onClose }: SnapshotsModalProps) {
   const [list, setList] = useState<SnapshotListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [detail, setDetail] = useState<SnapshotDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
   const fetchList = useCallback(async () => {
-    if (!token || !voterId) return;
+    if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch(
-        `/api/retros/${token}/snapshots?creatorId=${encodeURIComponent(voterId)}`,
-        { credentials: "include" }
-      );
+      const res = await fetch(`/api/retros/${token}/snapshots`, { credentials: "include" });
       if (res.ok) {
         const json = await res.json();
         setList(json);
@@ -33,7 +29,7 @@ export function SnapshotsModal({ token, voterId, isOpen, onClose }: SnapshotsMod
     } finally {
       setLoading(false);
     }
-  }, [token, voterId]);
+  }, [token]);
 
   useEffect(() => {
     if (isOpen) {
@@ -47,10 +43,9 @@ export function SnapshotsModal({ token, voterId, isOpen, onClose }: SnapshotsMod
       setDetailLoading(true);
       setDetail(null);
       try {
-        const res = await fetch(
-          `/api/retros/${token}/snapshots/${snapshotId}?creatorId=${encodeURIComponent(voterId)}`,
-          { credentials: "include" }
-        );
+        const res = await fetch(`/api/retros/${token}/snapshots/${snapshotId}`, {
+          credentials: "include",
+        });
         if (res.ok) {
           const json = await res.json();
           setDetail(json);
@@ -59,7 +54,7 @@ export function SnapshotsModal({ token, voterId, isOpen, onClose }: SnapshotsMod
         setDetailLoading(false);
       }
     },
-    [token, voterId]
+    [token]
   );
 
   if (!isOpen) return null;

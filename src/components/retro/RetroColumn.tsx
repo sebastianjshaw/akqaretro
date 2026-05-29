@@ -81,10 +81,7 @@ export function RetroColumn({
 
   const saveColumnConfig = useCallback(
     async (newConfig: ColumnConfigItem[]) => {
-      const url = creatorId
-        ? `/api/retros/${token}?creatorId=${encodeURIComponent(creatorId)}`
-        : `/api/retros/${token}`;
-      const res = await fetch(url, {
+      const res = await fetch(`/api/retros/${token}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -97,7 +94,7 @@ export function RetroColumn({
       }
       onRefetch();
     },
-    [token, creatorId, onRefetch]
+    [token, onRefetch]
   );
 
   const handleTitleBlur = useCallback(() => {

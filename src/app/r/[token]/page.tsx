@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { RetroBoard } from "@/components/retro/RetroBoard";
 import { RetroShareLink } from "@/components/retro/RetroShareLink";
 
@@ -21,9 +22,13 @@ export default async function RetroPage({ params }: PageProps) {
   let initial = null;
   try {
     const base = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
+    const cookieStore = await cookies();
     const res = await fetch(`${base}/api/retros/${token}`, {
       cache: "no-store",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookieStore.toString(),
+      },
     });
     if (res.ok) initial = await res.json();
   } catch {

@@ -30,7 +30,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
       try {
         const res = await fetch(
           `/api/retros/${token}?voterId=${encodeURIComponent(voterId)}`,
-          { signal: signal ?? null }
+          { signal: signal ?? null, credentials: "include" }
         );
         if (!res.ok) {
           if (res.status === 404) setError("Retro not found");
@@ -102,10 +102,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
       ...withoutActions.map((c, i) => ({ ...c, order: i + 1 })),
       ...(actionsCol ? [actionsCol] : []),
     ]);
-    const url = voterId
-      ? `/api/retros/${token}?creatorId=${encodeURIComponent(voterId)}`
-      : `/api/retros/${token}`;
-    const res = await fetch(url, {
+    const res = await fetch(`/api/retros/${token}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -117,7 +114,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
       return;
     }
     fetchRetro();
-  }, [data, token, voterId, fetchRetro]);
+  }, [data, token, fetchRetro]);
 
   const onVoteAddOptimistic = useCallback((cardId: string) => {
     setData((prev) => {
@@ -222,8 +219,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
                   onChange={async (e) => {
                     const checked = e.target.checked;
                     setData((prev) => (prev ? { ...prev, hideCardsFromNonOwners: checked } : null));
-                    const url = voterId ? `/api/retros/${token}?creatorId=${encodeURIComponent(voterId)}` : `/api/retros/${token}`;
-                    const res = await fetch(url, {
+                    const res = await fetch(`/api/retros/${token}`, {
                       method: "PATCH",
                       headers: { "Content-Type": "application/json" },
                       credentials: "include",
@@ -243,8 +239,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
                   onChange={async (e) => {
                     const checked = e.target.checked;
                     setData((prev) => (prev ? { ...prev, voteCountsHidden: checked } : null));
-                    const url = voterId ? `/api/retros/${token}?creatorId=${encodeURIComponent(voterId)}` : `/api/retros/${token}`;
-                    const res = await fetch(url, {
+                    const res = await fetch(`/api/retros/${token}`, {
                       method: "PATCH",
                       headers: { "Content-Type": "application/json" },
                       credentials: "include",
@@ -267,8 +262,10 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
                   if (snapshotting || !data) return;
                   setSnapshotting(true);
                   try {
-                    const url = voterId ? `/api/retros/${token}/snapshots?creatorId=${encodeURIComponent(voterId)}` : `/api/retros/${token}/snapshots`;
-                    const res = await fetch(url, { method: "POST", credentials: "include" });
+                    const res = await fetch(`/api/retros/${token}/snapshots`, {
+                      method: "POST",
+                      credentials: "include",
+                    });
                     if (!res.ok) {
                       const j = await res.json().catch(() => ({}));
                       window.alert(j.error ?? "Failed to create snapshot");
@@ -340,7 +337,6 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
       </div>
       <SnapshotsModal
         token={token}
-        voterId={voterId}
         isOpen={snapshotsOpen}
         onClose={() => setSnapshotsOpen(false)}
       />

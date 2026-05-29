@@ -5,6 +5,7 @@ import { publicMessageForPrismaError } from "@/lib/prismaErrors";
 import { generateRetroToken } from "@/lib/token";
 import { LIMITS, clampLength } from "@/lib/validation";
 import { safeParseJson } from "@/lib/safeJson";
+import { appendOwnerCookie } from "@/lib/retroOwner";
 
 export const dynamic = "force-dynamic";
 
@@ -106,12 +107,16 @@ export async function POST(request: NextRequest) {
         ...(creatorId && { creatorId }),
       },
     });
-    return NextResponse.json({
+    const response = NextResponse.json({
       token: retro.token,
       title: retro.title,
       date: retro.date,
       id: retro.id,
     });
+    if (retro.creatorId) {
+      appendOwnerCookie(response, retro.token, retro.creatorId);
+    }
+    return response;
   } catch (e) {
     const err = e instanceof Error ? e : new Error(String(e));
     console.error("POST /api/retros", err.message, err.stack);
