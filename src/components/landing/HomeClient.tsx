@@ -159,14 +159,14 @@ export function HomeClient({ session }: HomeClientProps) {
             <button
               type="button"
               onClick={handleSignInWithGoogle}
-              className="akqaretro-landing__signin text-sm text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] bg-transparent border-none cursor-pointer p-0 font-inherit"
+              className="akqaretro-landing__signin retro-accent-text text-sm hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--retro-accent)] bg-transparent border-none cursor-pointer p-0 font-inherit"
             >
               Sign in with Google
             </button>
           )}
         </div>
 
-        <section className="akqaretro-landing__create border border-[var(--akqa-border)] bg-[var(--surface-elevated)] shadow-lg p-8" aria-labelledby="akqaretro-create-heading">
+        <section className="akqaretro-landing__create border border-[var(--akqa-border)] border-t-4 border-t-[var(--retro-accent)] bg-[var(--surface-elevated)] shadow-lg p-8" aria-labelledby="akqaretro-create-heading">
           <h1 id="akqaretro-create-heading" className="akqaretro-landing__title akqaretro-headline text-2xl font-normal text-[var(--foreground)] mb-2 tracking-wide">
             New retrospective
           </h1>
@@ -183,7 +183,7 @@ export function HomeClient({ session }: HomeClientProps) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Sprint 42 Retro"
-              className="akqaretro-landing__input w-full border border-[var(--akqa-border)] bg-[var(--surface-input)] text-[var(--foreground)] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--akqa-dove)]"
+              className="akqaretro-landing__input w-full border border-[var(--akqa-border)] bg-[var(--surface-input)] text-[var(--foreground)] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--retro-accent)]"
               required
             />
             <label htmlFor="akqaretro-date" className="akqaretro-landing__label text-sm text-[var(--foreground)]">
@@ -194,7 +194,7 @@ export function HomeClient({ session }: HomeClientProps) {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="akqaretro-landing__input w-full border border-[var(--akqa-border)] bg-[var(--surface-input)] text-[var(--foreground)] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--akqa-dove)]"
+              className="akqaretro-landing__input w-full border border-[var(--akqa-border)] bg-[var(--surface-input)] text-[var(--foreground)] px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[var(--retro-accent)]"
             />
             {error && (
               <p className="akqaretro-landing__error text-sm akqaretro-text-error" role="alert">
@@ -206,7 +206,7 @@ export function HomeClient({ session }: HomeClientProps) {
               disabled={loading}
               aria-busy={loading}
               aria-disabled={loading}
-              className="akqaretro-landing__submit mt-2 bg-[var(--akqa-dove)] text-[var(--akqa-white)] font-medium px-4 py-3 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] focus-visible:ring-offset-2 disabled:opacity-50"
+              className="akqaretro-landing__submit retro-accent-bg mt-2 font-medium px-4 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--retro-accent)] focus-visible:ring-offset-2 disabled:opacity-50"
             >
               {loading ? "Creating…" : "Create retrospective"}
             </button>
@@ -238,7 +238,7 @@ export function HomeClient({ session }: HomeClientProps) {
               <p className="akqaretro-landing__my-retros-error-hint akqaretro-caption text-[var(--akqa-muted)]">
                 Data is stored on the server (Neon). This usually means the database is unreachable from production — check Vercel env vars{" "}
                 <code className="text-xs">DATABASE_URL</code> / <code className="text-xs">DIRECT_URL</code> and open{" "}
-                <a href="/api/health/db" className="underline text-[var(--akqa-dove)]">
+                <a href="/api/health/db" className="underline retro-accent-text">
                   /api/health/db
                 </a>{" "}
                 to test the connection.

@@ -8,10 +8,10 @@ interface PageProps {
 }
 
 export const metadata: Metadata = {
-  title: "Retrospective | AKQA",
+  title: "Retro",
   description: "Agile retrospective board",
   openGraph: {
-    title: "Retrospective | AKQA",
+    title: "Retro",
     description: "Agile retrospective board",
   },
   robots: { index: false, follow: false },

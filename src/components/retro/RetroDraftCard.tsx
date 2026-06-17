@@ -55,7 +55,7 @@ export function RetroDraftCard({ token, column, creatorId, onSaved, onCancel, on
             onChange={(e) => setText(e.target.value)}
             placeholder="Type something…"
             rows={3}
-            className="akqaretro-draft-card__textarea w-full min-h-[4.5rem] resize-y border border-[var(--akqa-border)] bg-[var(--surface-input)] text-[var(--foreground)] px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--akqa-dove)] leading-tight"
+            className="akqaretro-draft-card__textarea w-full min-h-[4.5rem] resize-y border border-[var(--akqa-border)] bg-[var(--surface-input)] text-[var(--foreground)] px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--retro-accent)] leading-tight"
             aria-label="Card content"
           />
           <div className="akqaretro-draft-card__actions flex items-center justify-end gap-1">
@@ -72,7 +72,7 @@ export function RetroDraftCard({ token, column, creatorId, onSaved, onCancel, on
               onClick={handleSave}
               disabled={saving || !text.trim()}
               aria-label="Submit card"
-              className="akqaretro-draft-card__save akqaretro-touch-target bg-[var(--akqa-dove)] text-[var(--akqa-white)] hover:opacity-90 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)] disabled:opacity-50"
+              className="akqaretro-draft-card__save akqaretro-touch-target retro-accent-bg focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--retro-accent)] disabled:opacity-50"
             >
               {saving ? <span className="text-[10px]">…</span> : <CheckIcon />}
             </button>

@@ -103,10 +103,10 @@ function DialogPanel({
             type="button"
             onClick={onConfirm}
             autoFocus={mode === "alert"}
-            className={`akqaretro-dialog__confirm akqaretro-touch-target px-4 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] ${
+            className={`akqaretro-dialog__confirm akqaretro-touch-target px-4 text-sm focus:outline-none focus-visible:ring-2 ${
               destructive
-                ? "border border-[var(--akqa-error)] bg-[var(--akqa-error)] text-[var(--akqa-white)] hover:opacity-90"
-                : "border border-[var(--akqa-dove)] bg-[var(--akqa-dove)] text-[var(--akqa-white)] hover:opacity-90"
+                ? "border border-[var(--akqa-error)] bg-[var(--akqa-error)] text-[var(--akqa-white)] hover:opacity-90 focus-visible:ring-[var(--akqa-error)]"
+                : "retro-accent-bg border border-[var(--retro-accent)] focus-visible:ring-[var(--retro-accent)]"
             }`}
           >
             {confirmLabel ?? (mode === "confirm" ? "Confirm" : "OK")}

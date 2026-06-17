@@ -153,7 +153,7 @@ function RetroCardItemInner({ card, token, voterId, votesRemaining, voteCountsHi
         isDragging ? "akqaretro-card--dragging opacity-80 shadow-md z-10" : ""
       } ${
         isMergeOver
-          ? "akqaretro-card--merge-over ring-4 ring-[var(--akqa-dove)] ring-offset-2 ring-offset-[var(--surface-input)] border-2 border-dashed border-[var(--akqa-dove)] bg-[var(--akqa-dove)]/10 dark:bg-[var(--akqa-dove)]/20 shadow-lg"
+          ? "akqaretro-card--merge-over ring-4 ring-[var(--retro-accent)] ring-offset-2 ring-offset-[var(--surface-input)] border-2 border-dashed border-[var(--retro-accent)] bg-[var(--retro-accent-subtle)] shadow-lg"
           : "bg-[var(--surface-elevated)] border-[var(--akqa-border)]"
       } ${done ? "akqaretro-card--done opacity-60" : ""}`}
     >
@@ -187,7 +187,7 @@ function RetroCardItemInner({ card, token, voterId, votesRemaining, voteCountsHi
                 <button type="button" onClick={() => { setIsEditing(false); setText(card.text); }} aria-label="Cancel" className="akqaretro-card__cancel akqaretro-touch-target border border-[var(--akqa-border)] text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)] hover:bg-[var(--akqa-border)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)]">
                   <XIcon />
                 </button>
-                <button type="button" onClick={handleSave} disabled={saving} aria-label="Save" className="akqaretro-card__save akqaretro-touch-target bg-[var(--akqa-dove)] text-[var(--akqa-white)] hover:opacity-90 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)] disabled:opacity-50">
+                <button type="button" onClick={handleSave} disabled={saving} aria-label="Save" className="akqaretro-card__save akqaretro-touch-target retro-accent-bg focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--retro-accent)] disabled:opacity-50">
                   {saving ? <span className="text-[10px]">…</span> : <CheckIcon />}
                 </button>
               </div>
@@ -201,7 +201,7 @@ function RetroCardItemInner({ card, token, voterId, votesRemaining, voteCountsHi
               <div className="akqaretro-card__row flex items-center justify-between gap-1 flex-wrap">
                 <div className="akqaretro-card__actions flex items-center gap-0.5">
                   {isActionsColumn && !done && (
-                    <button type="button" onClick={handleDone} disabled={markingDone} aria-label="Mark as done" className="akqaretro-card__done akqaretro-touch-target px-2 border border-[var(--akqa-dove)] bg-[var(--akqa-dove)] text-[var(--akqa-white)] hover:opacity-90 focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--akqa-dove)] disabled:opacity-50 text-xs font-medium">
+                    <button type="button" onClick={handleDone} disabled={markingDone} aria-label="Mark as done" className="akqaretro-card__done akqaretro-touch-target px-2 border border-[var(--retro-accent)] retro-accent-bg focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--retro-accent)] disabled:opacity-50 text-xs font-medium">
                       {markingDone ? "…" : "Done"}
                     </button>
                   )}
@@ -223,7 +223,7 @@ function RetroCardItemInner({ card, token, voterId, votesRemaining, voteCountsHi
               </div>
               {isMergeOver && (
                 <p
-                  className="akqaretro-card__merge-hint mt-1.5 pt-1.5 border-t border-[var(--akqa-dove)]/30 text-[10px] font-medium uppercase tracking-wide text-[var(--akqa-dove)] dark:text-[var(--akqa-dusty)]"
+                  className="akqaretro-card__merge-hint mt-1.5 pt-1.5 border-t border-[var(--retro-accent)]/30 text-[10px] font-medium uppercase tracking-wide retro-accent-text"
                   role="status"
                   aria-live="polite"
                 >

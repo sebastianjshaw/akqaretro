@@ -323,7 +323,7 @@ export function RetroBoard({ token, initial }: RetroBoardProps) {
                   }
                 }}
                 disabled={snapshotting}
-                className="akqaretro-board__snapshot text-sm border border-[var(--akqa-dove)] bg-[var(--akqa-dove)] text-[var(--akqa-white)] px-3 py-2 hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] disabled:opacity-50"
+                className="akqaretro-board__snapshot retro-accent-bg text-sm border border-[var(--retro-accent)] px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--retro-accent)] disabled:opacity-50"
                 aria-label="Save snapshot and start new board"
               >
                 {snapshotting ? "…" : "Snapshot"}

@@ -3,7 +3,7 @@
 /* Class-based dark mode so we can force light; script in layout sets .dark on html */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* AKQA Brand Guidelines 2026 – Season by Displaay */
+/* Season by Displaay */
 @font-face {
   font-family: "Season Mix";
   src: url("/fonts/SeasonMix-Regular.woff2") format("woff2");
@@ -26,9 +26,12 @@
   font-display: swap;
 }
 
-/* AKQA brand colours – strong contrast for text (#000 / #FFF per guidelines) */
+/* Retro — neutral base + teal accent for highlights */
 :root {
   color-scheme: light;
+  --retro-accent: #0f766e;
+  --retro-accent-hover: #0d9488;
+  --retro-accent-subtle: #ccfbf1;
   --akqa-dove: #666666;
   --akqa-white: #ffffff;
   --akqa-black: #000000;
@@ -49,6 +52,9 @@
 /* Dark theme only when .dark is set on html (by theme script) */
 html.dark {
   color-scheme: dark;
+  --retro-accent: #5eead4;
+  --retro-accent-hover: #2dd4bf;
+  --retro-accent-subtle: rgba(20, 184, 166, 0.12);
   --background: #1a1a1a;
   --foreground: var(--akqa-white);
   --akqa-border: #404040;
@@ -73,11 +79,31 @@ body {
   line-height: 1.6;
 }
 
-/* AKQA typography – headlines ALL CAPS; subtitles/body sentence case */
+/* Typography — headlines ALL CAPS; subtitles/body sentence case */
 .akqaretro-font-mix { font-family: var(--font-season-mix); }
 .akqaretro-font-sans { font-family: var(--font-season-sans); }
 .akqaretro-font-serif { font-family: var(--font-season-serif); }
 .akqaretro-headline { font-family: var(--font-season-sans); text-transform: uppercase; letter-spacing: 0.02em; }
+.retro-headline { font-family: var(--font-season-sans); text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Accent highlights — primary actions, logo, key links */
+.retro-accent-bg {
+  background-color: var(--retro-accent);
+  color: var(--akqa-white);
+}
+.retro-accent-bg:hover {
+  background-color: var(--retro-accent-hover);
+}
+html.dark .retro-accent-bg {
+  color: #0f172a;
+}
+.retro-accent-text {
+  color: var(--retro-accent);
+}
+.retro-accent-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--retro-accent);
+}
 .akqaretro-headline-mix { font-family: var(--font-season-mix); text-transform: uppercase; letter-spacing: 0.02em; }
 .akqaretro-subtitle { font-family: var(--font-season-serif); }
 .akqaretro-caption { font-size: 0.8rem; line-height: 1.4; }

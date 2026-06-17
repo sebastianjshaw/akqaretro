@@ -265,7 +265,7 @@ function RetroColumnInner({
             type="button"
             onClick={handleAddCard}
             disabled={hasDraft}
-            className="akqaretro-column__add bg-[var(--akqa-dove)] text-[var(--akqa-white)] px-4 py-2 text-sm font-medium hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--akqa-dove)] focus-visible:ring-offset-2 disabled:opacity-50"
+            className="akqaretro-column__add retro-accent-bg px-4 py-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--retro-accent)] focus-visible:ring-offset-2 disabled:opacity-50"
             aria-label={`Add card to ${columnTitle}`}
           >
             Add
